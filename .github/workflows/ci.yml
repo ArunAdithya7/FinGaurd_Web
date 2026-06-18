@@ -154,3 +154,21 @@ jobs:
         with:
           name: selenium-test-reports
           path: selenium_tests/reports/
+
+  # 6. Load Tests
+  load-tests:
+    name: Load Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Run Load Test (Mock Mode)
+        run: |
+          python load_tests/load_test.py --mock --duration 60 --users 100
+
