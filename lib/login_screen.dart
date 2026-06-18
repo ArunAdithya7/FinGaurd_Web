@@ -97,10 +97,12 @@ class _LoginScreenState extends State<LoginScreen> {
         );
 
         // --- NAVIGATE TO DASHBOARD ---
-        // pushReplacement prevents users from hitting 'back' to see the login screen again
-        Navigator.pushReplacement(
+        // pushAndRemoveUntil clears the entire history stack so DashboardScreen is the root.
+        // This prevents back navigation to GetStartedScreen or LoginScreen.
+        Navigator.pushAndRemoveUntil(
           context,
           MaterialPageRoute(builder: (_) => const DashboardScreen()),
+          (route) => false,
         );
       } else {
         ScaffoldMessenger.of(context).showSnackBar(

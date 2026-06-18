@@ -1,0 +1,13 @@
+{
+  "name": "finguard-selenium-tests",
+  "version": "1.0.0",
+  "description": "Selenium WebDriver End-to-End Test Suite for FinGuard Web Application",
+  "main": "test_runner.js",
+  "scripts": {
+    "test": "node test_runner.js"
+  },
+  "dependencies": {
+    "exceljs": "^4.4.0",
+    "selenium-webdriver": "^4.22.0"
+  }
+}

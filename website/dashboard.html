@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FinGuard - Dashboard</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="icon" type="image/png" href="assets/finguard_logo.png">
+  <!-- Font Awesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <!-- Session check script (runs instantly before rendering) -->
+  <script>
+    const token = localStorage.getItem('auth_token');
+    const isLoggedIn = localStorage.getItem('isLoggedIn');
+    if (isLoggedIn !== 'true' || !token) {
+      window.location.href = 'login.html';
+    }
+  </script>
+
+  <div class="dashboard-layout">
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <div class="app-brand">
+          <img src="assets/finguard_logo.png" alt="FinGuard Logo" class="app-logo">
+          <span class="app-name">FinGuard</span>
+        </div>
+      </div>
+      <nav class="sidebar-nav">
+        <div class="nav-item active" data-tab="home">
+          <i class="fa-solid fa-chart-pie"></i>
+          <span>Dashboard</span>
+        </div>
+        <div class="nav-item" data-tab="risk">
+          <i class="fa-solid fa-triangle-exclamation"></i>
+          <span>Risk Analysis</span>
+        </div>
+        <div class="nav-item" data-tab="forecast">
+          <i class="fa-solid fa-arrow-trend-up"></i>
+          <span>Predictions</span>
+        </div>
+        <div class="nav-item" data-tab="recommendations">
+          <i class="fa-regular fa-lightbulb"></i>
+          <span>Recommendations</span>
+        </div>
+        <div class="nav-item" data-tab="profile">
+          <i class="fa-regular fa-user"></i>
+          <span>Profile</span>
+        </div>
+      </nav>
+      <div class="sidebar-footer">
+        <div class="nav-item" onclick="handleLogout()" style="color: #ef4444;">
+          <i class="fa-solid fa-arrow-right-from-bracket"></i>
+          <span>Logout</span>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Section -->
+    <div class="main-wrapper">
+      <header class="top-navbar">
+        <div class="navbar-title" id="navTitle">Dashboard</div>
+        <div class="navbar-actions">
+          <button class="notify-bell">
+            <i class="fa-regular fa-bell"></i>
+            <span class="notify-badge"></span>
+          </button>
+        </div>
+      </header>
+
+      <div class="content-container">
+        <!-- 1. HOME DASHBOARD TAB -->
+        <div class="tab-pane active" id="tab-home">
+          <div class="dashboard-grid">
+            <!-- Risk card -->
+            <div class="card stress-card">
+              <div class="progress-circle-wrapper">
+                <svg class="progress-svg">
+                  <circle class="progress-bg-circle" cx="50" cy="50" r="45"></circle>
+                  <circle class="progress-bar-circle" id="homeProgressCircle" cx="50" cy="50" r="45"></circle>
+                </svg>
+                <div class="progress-text">
+                  <span class="progress-val" id="homeRiskScore">0</span>
+                  <span class="progress-total">/100</span>
+                </div>
+              </div>
+              <div class="stress-details">
+                <h3>Financial Distress Risk</h3>
+                <div class="stress-level" id="homeRiskLevel">Loading</div>
+                <div class="stress-desc" id="homeRiskDesc">Loading your financial health data...</div>
+              </div>
+            </div>
+
+            <!-- Summary metrics -->
+            <div class="summary-grid">
+              <div class="metric-card">
+                <div class="metric-title">Assets</div>
+                <div class="metric-value" id="valAssets">₹0</div>
+                <div class="metric-subtitle" style="color: var(--success);">Live from backend</div>
+              </div>
+              <div class="metric-card">
+                <div class="metric-title">Liabilities</div>
+                <div class="metric-value" id="valLiabilities">₹0</div>
+                <div class="metric-subtitle" style="color: var(--danger);">Live from backend</div>
+              </div>
+              <div class="metric-card">
+                <div class="metric-title">Savings Runway</div>
+                <div class="metric-value" id="valRunway">0 mo</div>
+                <div class="metric-subtitle" id="subRunway" style="color: var(--text-muted);">Months covered</div>
+              </div>
+              <div class="metric-card">
+                <div class="metric-title">Expense Ratio</div>
+                <div class="metric-value" id="valExpenseRatio">0%</div>
+                <div class="metric-subtitle" id="subExpenseRatio" style="color: var(--text-muted);">Income spent</div>
+              </div>
+              <div class="metric-card">
+                <div class="metric-title">Debt Ratio</div>
+                <div class="metric-value" id="valDebtRatio">0%</div>
+                <div class="metric-subtitle" id="subDebtRatio" style="color: var(--text-muted);">Debt vs income</div>
+              </div>
+              <div class="metric-card">
+                <div class="metric-title">Monthly Surplus</div>
+                <div class="metric-value" id="valSurplus">₹0</div>
+                <div class="metric-subtitle" style="color: var(--success);">Surplus income</div>
+              </div>
+            </div>
+
+            <!-- Chart Card -->
+            <div class="card chart-card">
+              <h3>Risk Score Trend</h3>
+              <div class="chart-container">
+                <canvas id="riskTrendChart"></canvas>
+              </div>
+            </div>
+
+            <!-- Quick Actions & Alerts -->
+            <div style="display: flex; flex-direction: column; gap: 20px;">
+              <div class="card">
+                <h3 style="font-size: 18px; font-weight: 800; margin-bottom: 16px;">Quick Actions</h3>
+                <div class="actions-grid">
+                  <div class="action-tile" onclick="openModal('modalExpense')">
+                    <i class="fa-solid fa-circle-minus" style="color: var(--danger);"></i>
+                    <span class="action-label">Add Expense</span>
+                  </div>
+                  <div class="action-tile" onclick="openModal('modalIncome')">
+                    <i class="fa-solid fa-circle-plus" style="color: var(--success);"></i>
+                    <span class="action-label">Add Income</span>
+                  </div>
+                  <div class="action-tile" onclick="openModal('modalDebt')">
+                    <i class="fa-solid fa-credit-card" style="color: var(--warning);"></i>
+                    <span class="action-label">Add Debt</span>
+                  </div>
+                  <div class="action-tile" onclick="switchTab('forecast')">
+                    <i class="fa-solid fa-arrow-trend-up"></i>
+                    <span class="action-label">Forecast</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Alerts Card -->
+            <div class="card" style="grid-column: span 2;">
+              <h3 style="font-size: 18px; font-weight: 800; margin-bottom: 16px;">Latest Alerts</h3>
+              <div class="alerts-list" id="homeAlertsList">
+                <div class="alert-item">
+                  <div class="alert-icon-box" style="background-color: var(--success-bg); color: var(--success);">
+                    <i class="fa-regular fa-circle-check"></i>
+                  </div>
+                  <div class="alert-details">
+                    <div class="alert-title">No alerts found</div>
+                    <div class="alert-subtitle">Your current financial status looks stable.</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 2. RISK ANALYSIS TAB -->
+        <div class="tab-pane" id="tab-risk">
+          <div style="display: flex; flex-direction: column; gap: 24px;">
+            <div class="card stress-card">
+              <div class="progress-circle-wrapper">
+                <svg class="progress-svg">
+                  <circle class="progress-bg-circle" cx="50" cy="50" r="45"></circle>
+                  <circle class="progress-bar-circle" id="riskProgressCircle" cx="50" cy="50" r="45"></circle>
+                </svg>
+                <div class="progress-text">
+                  <span class="progress-val" id="riskRiskScore">0</span>
+                  <span class="progress-total">/100</span>
+                </div>
+              </div>
+              <div class="stress-details">
+                <h3>Financial Distress Risk</h3>
+                <div class="stress-level" id="riskRiskLevel">Loading</div>
+                <div class="stress-desc" id="riskRiskDesc">Loading analysis...</div>
+              </div>
+            </div>
+
+            <div class="summary-grid">
+              <div class="metric-card">
+                <div class="metric-title">Expense Ratio</div>
+                <div class="metric-value" id="riskExpenseRatio">0%</div>
+                <div class="metric-subtitle" id="riskSubExpenseRatio" style="color: var(--text-muted);">Current Month</div>
+              </div>
+              <div class="metric-card">
+                <div class="metric-title">Debt Ratio</div>
+                <div class="metric-value" id="riskDebtRatio">0%</div>
+                <div class="metric-subtitle" id="riskSubDebtRatio" style="color: var(--text-muted);">Current Month</div>
+              </div>
+              <div class="metric-card">
+                <div class="metric-title">Savings Runway</div>
+                <div class="metric-value" id="riskRunway">0 mo</div>
+                <div class="metric-subtitle" id="riskSubRunway" style="color: var(--text-muted);">Current Month</div>
+              </div>
+              <div class="metric-card">
+                <div class="metric-title">Monthly Surplus</div>
+                <div class="metric-value" id="riskSurplus">₹0</div>
+                <div class="metric-subtitle" style="color: var(--success);">Current Month</div>
+              </div>
+            </div>
+
+            <div class="card">
+              <h3 style="font-size: 18px; font-weight: 800; margin-bottom: 16px;">Why this score?</h3>
+              <div id="riskFactorsContainer">
+                <div class="factor-card">
+                  <div class="factor-info">
+                    <div class="factor-title">Loading factors...</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="card">
+              <h3 style="font-size: 18px; font-weight: 800; margin-bottom: 16px;">Suggested Actions</h3>
+              <div class="alerts-list" id="riskSuggestionsContainer">
+                <!-- Javascript will load suggested actions -->
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 3. PREDICTIONS TAB -->
+        <div class="tab-pane" id="tab-forecast">
+          <div style="display: flex; flex-direction: column; gap: 24px;">
+            <div class="card stress-card">
+              <div class="progress-circle-wrapper">
+                <svg class="progress-svg">
+                  <circle class="progress-bg-circle" cx="50" cy="50" r="45"></circle>
+                  <circle class="progress-bar-circle" id="forecastProgressCircle" cx="50" cy="50" r="45"></circle>
+                </svg>
+                <div class="progress-text">
+                  <span class="progress-val" id="forecastRiskScore">0</span>
+                  <span class="progress-total">/100</span>
+                </div>
+              </div>
+              <div class="stress-details">
+                <h3>Forecasted Financial Risk</h3>
+                <div class="stress-level" id="forecastRiskLevel">Loading</div>
+                <div class="stress-desc">These values show your expected financial path based on current trends.</div>
+              </div>
+            </div>
+
+            <div class="card">
+              <h3 style="font-size: 18px; font-weight: 800; margin-bottom: 16px;">30 / 60 / 90 Day Forecast</h3>
+              <div id="forecastProjectionsContainer" style="display: flex; flex-direction: column; gap: 16px;">
+                <!-- Projection items will load here -->
+              </div>
+            </div>
+
+            <div class="card chart-card">
+              <h3>Risk Trend Preview</h3>
+              <div class="chart-container">
+                <canvas id="forecastTrendChart"></canvas>
+              </div>
+            </div>
+
+            <div class="card">
+              <h3 style="font-size: 18px; font-weight: 800; margin-bottom: 16px;">Recommended Actions</h3>
+              <div class="alerts-list" id="forecastRecContainer">
+                <!-- Forecast recommendation actions will load here -->
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 4. RECOMMENDATIONS TAB -->
+        <div class="tab-pane" id="tab-recommendations">
+          <div style="display: flex; flex-direction: column; gap: 24px;">
+            <div class="card stress-card">
+              <div class="progress-circle-wrapper">
+                <svg class="progress-svg">
+                  <circle class="progress-bg-circle" cx="50" cy="50" r="45"></circle>
+                  <circle class="progress-bar-circle" id="recProgressCircle" cx="50" cy="50" r="45"></circle>
+                </svg>
+                <div class="progress-text">
+                  <span class="progress-val" id="recRiskScore">0</span>
+                  <span class="progress-total">/100</span>
+                </div>
+              </div>
+              <div class="stress-details">
+                <h3>Recommended Actions</h3>
+                <div class="stress-level" id="recRiskLevel">Loading</div>
+                <div class="stress-desc">These actions are based on your current financial risk and forecast.</div>
+              </div>
+            </div>
+
+            <div class="card">
+              <h3 style="font-size: 18px; font-weight: 800; margin-bottom: 16px;">Priority Actions</h3>
+              <div class="alerts-list" id="recPriorityContainer">
+                <!-- Javascript will load priority actions -->
+              </div>
+            </div>
+
+            <div class="card">
+              <h3 style="font-size: 18px; font-weight: 800; margin-bottom: 16px;">Detailed Recommendations</h3>
+              <div id="recDetailedContainer">
+                <!-- Detailed items with impact badges will load here -->
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 5. PROFILE TAB -->
+        <div class="tab-pane" id="tab-profile">
+          <div style="max-width: 600px; margin: 0 auto;">
+            <div class="card profile-card">
+              <div class="profile-avatar" id="profAvatar">U</div>
+              <div class="profile-name" id="profName">Loading User</div>
+              <div class="profile-email" id="profEmail">loading@finguard.com</div>
+            </div>
+
+            <div class="profile-info-grid">
+              <div class="info-tile">
+                <div class="info-icon"><i class="fa-regular fa-user"></i></div>
+                <div class="info-details">
+                  <span class="info-label">Full Name</span>
+                  <span class="info-val" id="tileFullName">Loading...</span>
+                </div>
+              </div>
+              <div class="info-tile">
+                <div class="info-icon"><i class="fa-regular fa-envelope"></i></div>
+                <div class="info-details">
+                  <span class="info-label">Email Address</span>
+                  <span class="info-val" id="tileEmail">Loading...</span>
+                </div>
+              </div>
+              <div class="info-tile">
+                <div class="info-icon"><i class="fa-solid fa-phone"></i></div>
+                <div class="info-details">
+                  <span class="info-label">Mobile Number</span>
+                  <span class="info-val" id="tileMobile">Loading...</span>
+                </div>
+              </div>
+              <div class="info-tile">
+                <div class="info-icon"><i class="fa-regular fa-calendar-days"></i></div>
+                <div class="info-details">
+                  <span class="info-label">Joined Date</span>
+                  <span class="info-val" id="tileJoined">Loading...</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="profile-actions">
+              <button class="btn btn-profile" onclick="openProfileEditModal()">Edit Profile</button>
+              <button class="btn btn-profile" onclick="openModal('modalPassword')">Change Password</button>
+              <button class="btn btn-danger" onclick="handleLogout()" style="font-weight: 700;">Logout</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== MODALS ==================== -->
+
+  <!-- Add Expense Modal -->
+  <div class="modal" id="modalExpense">
+    <div class="modal-content">
+      <button class="modal-close" onclick="closeModal('modalExpense')">&times;</button>
+      <h3 class="modal-title">Add Expense</h3>
+      <form id="expenseForm" onsubmit="submitExpense(event)">
+        <div class="form-group">
+          <label class="form-label" for="expCategory">Category</label>
+          <input type="text" id="expCategory" class="form-control" placeholder="e.g. Rent, Food, Travel" required style="padding-left: 14px;">
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="expAmount">Amount (₹)</label>
+          <input type="number" id="expAmount" class="form-control" placeholder="0.00" required style="padding-left: 14px;">
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="expNotes">Notes (Optional)</label>
+          <input type="text" id="expNotes" class="form-control" placeholder="Additional details" style="padding-left: 14px;">
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="expDate">Transaction Date (Optional)</label>
+          <input type="date" id="expDate" class="form-control" style="padding-left: 14px;">
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-modal-cancel" onclick="closeModal('modalExpense')">Cancel</button>
+          <button type="submit" class="btn btn-primary btn-modal-submit">Add Expense</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Add Income Modal -->
+  <div class="modal" id="modalIncome">
+    <div class="modal-content">
+      <button class="modal-close" onclick="closeModal('modalIncome')">&times;</button>
+      <h3 class="modal-title">Add Income</h3>
+      <form id="incomeForm" onsubmit="submitIncome(event)">
+        <div class="form-group">
+          <label class="form-label" for="incCategory">Category</label>
+          <input type="text" id="incCategory" class="form-control" placeholder="e.g. Salary, Freelancing" required style="padding-left: 14px;">
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="incAmount">Amount (₹)</label>
+          <input type="number" id="incAmount" class="form-control" placeholder="0.00" required style="padding-left: 14px;">
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="incNotes">Notes (Optional)</label>
+          <input type="text" id="incNotes" class="form-control" placeholder="Additional details" style="padding-left: 14px;">
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="incDate">Transaction Date (Optional)</label>
+          <input type="date" id="incDate" class="form-control" style="padding-left: 14px;">
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-modal-cancel" onclick="closeModal('modalIncome')">Cancel</button>
+          <button type="submit" class="btn btn-primary btn-modal-submit">Add Income</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Add Debt Modal -->
+  <div class="modal" id="modalDebt">
+    <div class="modal-content">
+      <button class="modal-close" onclick="closeModal('modalDebt')">&times;</button>
+      <h3 class="modal-title">Add Debt</h3>
+      <form id="debtForm" onsubmit="submitDebt(event)">
+        <div class="form-group">
+          <label class="form-label" for="debtName">Debt Name</label>
+          <input type="text" id="debtName" class="form-control" placeholder="e.g. Home Loan, Credit Card" required style="padding-left: 14px;">
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="debtOutstanding">Outstanding Amount (₹)</label>
+          <input type="number" id="debtOutstanding" class="form-control" placeholder="0.00" required style="padding-left: 14px;">
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="debtPayment">Monthly Payment (₹)</label>
+          <input type="number" id="debtPayment" class="form-control" placeholder="0.00" required style="padding-left: 14px;">
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="debtInterest">Interest Rate (%)</label>
+          <input type="number" step="0.1" id="debtInterest" class="form-control" placeholder="0.0" style="padding-left: 14px;">
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-modal-cancel" onclick="closeModal('modalDebt')">Cancel</button>
+          <button type="submit" class="btn btn-primary btn-modal-submit">Add Debt</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Edit Profile Modal -->
+  <div class="modal" id="modalProfile">
+    <div class="modal-content">
+      <button class="modal-close" onclick="closeModal('modalProfile')">&times;</button>
+      <h3 class="modal-title">Edit Profile</h3>
+      <form id="profileForm" onsubmit="submitProfileEdit(event)">
+        <div class="form-group">
+          <label class="form-label" for="profEditName">Full Name</label>
+          <input type="text" id="profEditName" class="form-control" required style="padding-left: 14px;">
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="profEditMobile">Mobile Number</label>
+          <input type="tel" id="profEditMobile" class="form-control" required style="padding-left: 14px;">
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-modal-cancel" onclick="closeModal('modalProfile')">Cancel</button>
+          <button type="submit" class="btn btn-primary btn-modal-submit">Save Changes</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Change Password Modal -->
+  <div class="modal" id="modalPassword">
+    <div class="modal-content">
+      <button class="modal-close" onclick="closeModal('modalPassword')">&times;</button>
+      <h3 class="modal-title">Change Password</h3>
+      <form id="passwordForm" onsubmit="submitChangePassword(event)">
+        <div class="form-group">
+          <label class="form-label" for="passCurrent">Current Password</label>
+          <input type="password" id="passCurrent" class="form-control" required style="padding-left: 14px;">
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="passNew">New Password</label>
+          <input type="password" id="passNew" class="form-control" required style="padding-left: 14px;">
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-modal-cancel" onclick="closeModal('modalPassword')">Cancel</button>
+          <button type="submit" class="btn btn-primary btn-modal-submit">Update Password</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Loader Overlay -->
+  <div class="loading-overlay" id="loadingOverlay">
+    <div class="spinner"></div>
+  </div>
+
+  <!-- Toast Container -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- Core Scripts -->
+  <script src="js/api.js"></script>
+  <script src="js/dashboard.js"></script>
+</body>
+</html>

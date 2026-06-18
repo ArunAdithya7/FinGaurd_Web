@@ -1,0 +1,153 @@
+name: FinGuard CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+jobs:
+  # 1. Android App Build & Test
+  android-build-test:
+    name: Android App Build & Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.19.6'
+          channel: 'stable'
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Run Flutter Widget/Unit Tests
+        run: flutter test
+
+      - name: Build Debug APK
+        run: flutter build apk --debug
+
+      - name: Upload Debug APK Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: finguard-debug-apk
+          path: build/app/outputs/flutter-apk/app-debug.apk
+
+  # 2. Appium E2E Tests
+  appium-e2e-tests:
+    name: Appium E2E Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Install Python Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r appium_tests/requirements.txt
+
+      - name: Run Appium Suite (Mock Mode)
+        run: |
+          python appium_tests/run.py --mock
+
+      - name: Upload Appium Excel Reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: appium-test-reports
+          path: appium_tests/reports/
+
+  # 3. Pages-Build-Development
+  pages-build-development:
+    name: Pages-Build-Development
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Upload website artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: website/
+
+      - name: Deploy to GitHub Pages
+        if: github.ref == 'refs/heads/main'
+        id: deployment
+        uses: actions/deploy-pages@v4
+
+  # 4. React Web App Build & Test
+  react-web-app-build-test:
+    name: React Web App Build & Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Build Web App
+        run: flutter build web
+
+      - name: Upload Web Build Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: finguard-web-build
+          path: build/web/
+
+  # 5. Selenium Web Tests
+  selenium-web-tests:
+    name: Selenium Web Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Start Local Static Web Server
+        run: |
+          npx http-server website -p 8080 &
+          echo "Waiting for local web server to start..."
+          npx wait-on http://localhost:8080 --timeout 15000
+
+      - name: Install Selenium Test Dependencies
+        working-directory: selenium_tests
+        run: npm ci || npm install
+
+      - name: Run Selenium Tests (Headless Chrome)
+        working-directory: selenium_tests
+        run: npm test
+
+      - name: Upload Selenium Excel Reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: selenium-test-reports
+          path: selenium_tests/reports/

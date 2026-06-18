@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FinGuard - Login</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="icon" type="image/png" href="assets/finguard_logo.png">
+  <!-- Font Awesome Icons for Input decoration -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="auth-body">
+  <div class="auth-container">
+    <div class="auth-header">
+      <div class="app-brand">
+        <img src="assets/finguard_logo.png" alt="FinGuard Logo" class="app-logo">
+        <span class="app-name">FinGuard</span>
+      </div>
+      <h1 class="auth-title">Welcome Back!</h1>
+      <p class="auth-subtitle">Login to continue to your account</p>
+    </div>
+
+    <!-- Feedback Container -->
+    <div id="feedback" style="display: none; padding: 12px; margin-bottom: 20px; border-radius: 8px; font-weight: 600; font-size: 14px; text-align: left;"></div>
+
+    <form id="loginForm" onsubmit="handleLogin(event)">
+      <div class="form-group">
+        <label for="identifier" class="form-label">Email or Mobile Number</label>
+        <div class="input-wrapper">
+          <i class="fa-regular fa-envelope input-icon"></i>
+          <input type="text" id="identifier" class="form-control" placeholder="Enter email or mobile number" required>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="password" class="form-label">Password</label>
+        <div class="input-wrapper">
+          <i class="fa-solid fa-lock input-icon"></i>
+          <input type="password" id="password" class="form-control" placeholder="Enter your password" required>
+          <button type="button" class="password-toggle" onclick="togglePasswordVisibility()">
+            <i class="fa-regular fa-eye-slash" id="toggleIcon"></i>
+          </button>
+        </div>
+      </div>
+
+      <div class="auth-actions">
+        <a href="#" class="auth-link">Forgot Password?</a>
+      </div>
+
+      <button type="submit" class="btn btn-auth">Login</button>
+    </form>
+
+    <div class="auth-footer">
+      Don't have an account? <a href="signup.html" class="auth-link">Sign Up</a>
+    </div>
+  </div>
+
+  <div class="loading-overlay" id="loadingOverlay">
+    <div class="spinner"></div>
+  </div>
+
+  <script src="js/api.js"></script>
+  <script>
+    function togglePasswordVisibility() {
+      const passwordField = document.getElementById('password');
+      const toggleIcon = document.getElementById('toggleIcon');
+      if (passwordField.type === 'password') {
+        passwordField.type = 'text';
+        toggleIcon.className = 'fa-regular fa-eye';
+      } else {
+        passwordField.type = 'password';
+        toggleIcon.className = 'fa-regular fa-eye-slash';
+      }
+    }
+
+    async function handleLogin(e) {
+      e.preventDefault();
+      
+      const identifier = document.getElementById('identifier').value.trim();
+      const password = document.getElementById('password').value.trim();
+      const feedback = document.getElementById('feedback');
+      const loader = document.getElementById('loadingOverlay');
+
+      if (!identifier || !password) {
+        showFeedback('Please enter email/mobile and password', 'error');
+        return;
+      }
+
+      feedback.style.display = 'none';
+      loader.classList.add('active');
+
+      try {
+        const result = await AuthService.login(identifier, password);
+        
+        if (result.success) {
+          // Store token & user credentials
+          localStorage.setItem('isLoggedIn', 'true');
+          localStorage.setItem('auth_token', result.token);
+          localStorage.setItem('user_data', JSON.stringify(result.user));
+
+          showFeedback('Login successful! Redirecting...', 'success');
+          
+          setTimeout(() => {
+            window.location.href = 'dashboard.html';
+          }, 1000);
+        } else {
+          showFeedback(result.message || 'Login failed', 'error');
+          loader.classList.remove('active');
+        }
+      } catch (err) {
+        showFeedback(err.message || 'Error occurred during login', 'error');
+        loader.classList.remove('active');
+      }
+    }
+
+    function showFeedback(message, type) {
+      const feedback = document.getElementById('feedback');
+      feedback.textContent = message;
+      feedback.style.display = 'block';
+      if (type === 'success') {
+        feedback.style.backgroundColor = '#dcfce7';
+        feedback.style.color = '#16a34a';
+        feedback.style.border = '1px solid #bbf7d0';
+      } else {
+        feedback.style.backgroundColor = '#fee2e2';
+        feedback.style.color = '#ef4444';
+        feedback.style.border = '1px solid #fecaca';
+      }
+    }
+  </script>
+</body>
+</html>

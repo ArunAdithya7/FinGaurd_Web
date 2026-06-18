@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FinGuard - AI-Powered Financial Distress Prediction</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="icon" type="image/png" href="assets/finguard_logo.png">
+</head>
+<body class="landing-body">
+  <!-- Session check script (runs instantly before rendering to prevent screen flicker) -->
+  <script>
+    const token = localStorage.getItem('auth_token');
+    const isLoggedIn = localStorage.getItem('isLoggedIn');
+    if (isLoggedIn === 'true' && token) {
+      window.location.href = 'dashboard.html';
+    }
+  </script>
+
+  <div class="landing-container">
+    <header class="app-brand">
+      <img src="assets/finguard_logo.png" alt="FinGuard Logo" class="app-logo">
+      <span class="app-name">FinGuard</span>
+    </header>
+
+    <main style="flex: 1; display: flex; flex-direction: column;">
+      <h1 class="landing-title">AI-Powered Financial</h1>
+      <h2 class="landing-subtitle">Distress Prediction<br>System</h2>
+
+      <div class="landing-image-container">
+        <img src="assets/get_started_image.png" alt="Financial distress prediction visual illustration" class="landing-img">
+      </div>
+
+      <p class="landing-pitch">
+        Predict financial risk.<br>
+        Prevent financial stress.<br>
+        Secure your future.
+      </p>
+
+      <a href="login.html" class="btn btn-primary" style="margin-top: auto;">Get Started</a>
+    </main>
+  </div>
+</body>
+</html>

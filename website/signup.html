@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FinGuard - Sign Up</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="icon" type="image/png" href="assets/finguard_logo.png">
+  <!-- Font Awesome Icons for Input decoration -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="auth-body">
+  <div class="auth-container">
+    <div class="auth-header">
+      <div class="app-brand">
+        <img src="assets/finguard_logo.png" alt="FinGuard Logo" class="app-logo">
+        <span class="app-name">FinGuard</span>
+      </div>
+      <h1 class="auth-title">Create Account</h1>
+      <p class="auth-subtitle">Sign up to continue</p>
+    </div>
+
+    <!-- Feedback Container -->
+    <div id="feedback" style="display: none; padding: 12px; margin-bottom: 20px; border-radius: 8px; font-weight: 600; font-size: 14px; text-align: left;"></div>
+
+    <form id="signupForm" onsubmit="handleSignup(event)">
+      <div class="form-group">
+        <label for="fullName" class="form-label">Full Name</label>
+        <div class="input-wrapper">
+          <i class="fa-regular fa-user input-icon"></i>
+          <input type="text" id="fullName" class="form-control" placeholder="Enter full name" required>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="email" class="form-label">Email</label>
+        <div class="input-wrapper">
+          <i class="fa-regular fa-envelope input-icon"></i>
+          <input type="email" id="email" class="form-control" placeholder="Enter email" required>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="mobile" class="form-label">Mobile Number</label>
+        <div class="input-wrapper">
+          <i class="fa-solid fa-phone input-icon"></i>
+          <input type="tel" id="mobile" class="form-control" placeholder="Enter mobile number" required>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="password" class="form-label">Password</label>
+        <div class="input-wrapper">
+          <i class="fa-solid fa-lock input-icon"></i>
+          <input type="password" id="password" class="form-control" placeholder="Enter password" required>
+          <button type="button" class="password-toggle" onclick="togglePasswordVisibility('password', 'toggleIcon1')">
+            <i class="fa-regular fa-eye-slash" id="toggleIcon1"></i>
+          </button>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="confirmPassword" class="form-label">Confirm Password</label>
+        <div class="input-wrapper">
+          <i class="fa-solid fa-lock-open input-icon"></i>
+          <input type="password" id="confirmPassword" class="form-control" placeholder="Confirm password" required>
+          <button type="button" class="password-toggle" onclick="togglePasswordVisibility('confirmPassword', 'toggleIcon2')">
+            <i class="fa-regular fa-eye-slash" id="toggleIcon2"></i>
+          </button>
+        </div>
+      </div>
+
+      <button type="submit" class="btn btn-auth" style="margin-top: 10px;">Sign Up</button>
+    </form>
+
+    <div class="auth-footer">
+      Already have an account? <a href="login.html" class="auth-link">Login</a>
+    </div>
+  </div>
+
+  <div class="loading-overlay" id="loadingOverlay">
+    <div class="spinner"></div>
+  </div>
+
+  <script src="js/api.js"></script>
+  <script>
+    function togglePasswordVisibility(fieldId, iconId) {
+      const passwordField = document.getElementById(fieldId);
+      const toggleIcon = document.getElementById(iconId);
+      if (passwordField.type === 'password') {
+        passwordField.type = 'text';
+        toggleIcon.className = 'fa-regular fa-eye';
+      } else {
+        passwordField.type = 'password';
+        toggleIcon.className = 'fa-regular fa-eye-slash';
+      }
+    }
+
+    async function handleSignup(e) {
+      e.preventDefault();
+      
+      const fullName = document.getElementById('fullName').value.trim();
+      const email = document.getElementById('email').value.trim();
+      const mobile = document.getElementById('mobile').value.trim();
+      const password = document.getElementById('password').value.trim();
+      const confirmPassword = document.getElementById('confirmPassword').value.trim();
+      
+      const feedback = document.getElementById('feedback');
+      const loader = document.getElementById('loadingOverlay');
+
+      if (!fullName || !email || !mobile || !password || !confirmPassword) {
+        showFeedback('Please fill all fields', 'error');
+        return;
+      }
+
+      if (password !== confirmPassword) {
+        showFeedback('Passwords do not match', 'error');
+        return;
+      }
+
+      feedback.style.display = 'none';
+      loader.classList.add('active');
+
+      try {
+        const result = await AuthService.signup(fullName, email, mobile, password);
+        
+        if (result.success) {
+          showFeedback('Signup successful! Redirecting to login...', 'success');
+          setTimeout(() => {
+            window.location.href = 'login.html';
+          }, 1500);
+        } else {
+          showFeedback(result.message || 'Signup failed', 'error');
+          loader.classList.remove('active');
+        }
+      } catch (err) {
+        showFeedback(err.message || 'Error occurred during signup', 'error');
+        loader.classList.remove('active');
+      }
+    }
+
+    function showFeedback(message, type) {
+      const feedback = document.getElementById('feedback');
+      feedback.textContent = message;
+      feedback.style.display = 'block';
+      if (type === 'success') {
+        feedback.style.backgroundColor = '#dcfce7';
+        feedback.style.color = '#16a34a';
+        feedback.style.border = '1px solid #bbf7d0';
+      } else {
+        feedback.style.backgroundColor = '#fee2e2';
+        feedback.style.color = '#ef4444';
+        feedback.style.border = '1px solid #fecaca';
+      }
+    }
+  </script>
+</body>
+</html>

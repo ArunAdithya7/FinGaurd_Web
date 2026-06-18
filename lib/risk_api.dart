@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 class RiskApi {
-  static const String baseUrl = 'https://m8bkbk54-8000.inc1.devtunnels.ms';
+  static const String baseUrl = 'http://10.0.2.2:8000';
   
 
   static Future<Map<String, dynamic>> fetchRiskAnalysis(String token) async {

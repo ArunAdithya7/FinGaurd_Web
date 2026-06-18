@@ -6,6 +6,7 @@ import 'risk_analysis_screen.dart';
 import 'forecast_screen.dart';
 import 'recommendations_screen.dart';
 import 'profile_screen.dart';
+import 'login_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -48,36 +49,53 @@ class _DashboardScreenState extends State<DashboardScreen> {
     });
 
     if (index == 0) {
-      // Home Dashboard
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => const DashboardScreen()),
-      );
+      // Home Dashboard - already on home, reload dashboard
+      loadDashboard();
     }
 
     if (index == 1) {
       // Risk Analysis
-      Navigator.pushReplacement(
+      Navigator.push(
         context,
         MaterialPageRoute(builder: (_) => const RiskAnalysisScreen()),
-      );
+      ).then((_) {
+        if (mounted) {
+          setState(() {
+            selectedIndex = 0;
+          });
+          loadDashboard();
+        }
+      });
     }
 
     if (index == 2) {
       // Forecast / Predictions
-      Navigator.pushReplacement(
+      Navigator.push(
         context,
         MaterialPageRoute(builder: (_) => const ForecastScreen()),
-      );
+      ).then((_) {
+        if (mounted) {
+          setState(() {
+            selectedIndex = 0;
+          });
+          loadDashboard();
+        }
+      });
     }
 
     if (index == 3) {
       // Profile Screen
-      // Replace with your profile screen
       Navigator.push(
         context,
         MaterialPageRoute(builder: (_) => const ProfileScreen()),
-      );
+      ).then((_) {
+        if (mounted) {
+          setState(() {
+            selectedIndex = 0;
+          });
+          loadDashboard();
+        }
+      });
     }
   }
 
@@ -321,7 +339,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
                 const SizedBox(height: 8),
 
-                _drawerItem(Icons.dashboard_rounded, 'Dashboard', true),
+                 _drawerItem(
+                  Icons.dashboard_rounded,
+                  'Dashboard',
+                  true,
+                  onTap: () => Navigator.pop(context),
+                ),
 
                 _drawerItem(
                   Icons.analytics_outlined,
@@ -329,29 +352,48 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   false,
                   onTap: () {
                     Navigator.pop(context);
-
                     Navigator.push(
                       context,
                       MaterialPageRoute(
                         builder: (_) => const RiskAnalysisScreen(),
                       ),
-                    );
+                    ).then((_) {
+                      if (mounted) loadDashboard();
+                    });
                   },
                 ),
 
-                _drawerItem(Icons.show_chart_rounded, 'Predictions', false),
+                _drawerItem(
+                  Icons.show_chart_rounded,
+                  'Predictions',
+                  false,
+                  onTap: () {
+                    Navigator.pop(context);
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const ForecastScreen(),
+                      ),
+                    ).then((_) {
+                      if (mounted) loadDashboard();
+                    });
+                  },
+                ),
 
                 _drawerItem(
                   Icons.lightbulb_outline,
                   'Recommendations',
                   false,
                   onTap: () {
+                    Navigator.pop(context);
                     Navigator.push(
                       context,
                       MaterialPageRoute(
                         builder: (_) => const RecommendationsScreen(),
                       ),
-                    );
+                    ).then((_) {
+                      if (mounted) loadDashboard();
+                    });
                   },
                 ),
 
@@ -367,7 +409,22 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
                 const Spacer(),
 
-                _drawerItem(Icons.logout_rounded, 'Logout', false),
+                _drawerItem(
+                  Icons.logout_rounded,
+                  'Logout',
+                  false,
+                  onTap: () async {
+                    Navigator.pop(context);
+                    final prefs = await SharedPreferences.getInstance();
+                    await prefs.clear();
+                    if (!mounted) return;
+                    Navigator.pushAndRemoveUntil(
+                      context,
+                      MaterialPageRoute(builder: (_) => const LoginScreen()),
+                      (route) => false,
+                    );
+                  },
+                ),
 
                 const SizedBox(height: 8),
               ],
