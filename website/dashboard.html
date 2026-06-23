@@ -47,6 +47,10 @@
           <i class="fa-regular fa-lightbulb"></i>
           <span>Recommendations</span>
         </div>
+        <div class="nav-item" data-tab="pipeline">
+          <i class="fa-solid fa-network-wired"></i>
+          <span>CI/CD Pipeline</span>
+        </div>
         <div class="nav-item" data-tab="profile">
           <i class="fa-regular fa-user"></i>
           <span>Profile</span>
@@ -325,7 +329,153 @@
           </div>
         </div>
 
-        <!-- 5. PROFILE TAB -->
+        <!-- 5. CI/CD PIPELINE TAB -->
+        <div class="tab-pane" id="tab-pipeline">
+          <div class="pipeline-dashboard">
+            <!-- Sidebar for listing jobs -->
+            <div class="pipeline-sidebar">
+              <div class="pipeline-sidebar-header">
+                <h3>Workflow Jobs</h3>
+                <button class="btn-run-workflow" id="btnRunWorkflow">
+                  <i class="fa-solid fa-play"></i> Run Workflow
+                </button>
+              </div>
+              <div class="pipeline-jobs-list" id="pipelineJobsList">
+                <!-- Loaded dynamically by JS -->
+              </div>
+            </div>
+            
+            <!-- Graph Visualization area -->
+            <div class="pipeline-graph-area">
+              <div class="pipeline-graph-header">
+                <div class="workflow-info">
+                  <span class="workflow-status-badge status-success" id="workflowStatusBadge">
+                    <i class="fa-solid fa-circle-check"></i> Success
+                  </span>
+                  <span class="workflow-commit-info">
+                    <i class="fa-solid fa-code-branch"></i> <strong>main</strong> · Commit <code id="workflowCommitHash">19ea259</code>
+                  </span>
+                </div>
+                <div class="workflow-stats">
+                  <span><i class="fa-regular fa-clock"></i> Duration: <strong id="workflowDurationText">1m 45s</strong></span>
+                </div>
+              </div>
+              
+              <div class="pipeline-graph-viewport" id="pipelineViewport">
+                <!-- SVG layer for connector lines -->
+                <svg class="pipeline-svg-overlay" id="pipelineSvgOverlay"></svg>
+                
+                <!-- Columns for stages -->
+                <div class="pipeline-stage-column" data-stage="build">
+                  <div class="stage-column-title">Build & Test</div>
+                  <div class="pipeline-node-wrapper">
+                    <!-- Android App Build & Test -->
+                    <div class="pipeline-node-card status-success" id="node-android" data-job="android">
+                      <div class="node-status-icon"><i class="fa-solid fa-circle-check"></i></div>
+                      <div class="node-content">
+                        <div class="node-title">Android App Build & Test</div>
+                        <div class="node-time">2m 14s</div>
+                      </div>
+                    </div>
+                    <!-- React Web App Build & Test -->
+                    <div class="pipeline-node-card status-success" id="node-react" data-job="react">
+                      <div class="node-status-icon"><i class="fa-solid fa-circle-check"></i></div>
+                      <div class="node-content">
+                        <div class="node-title">React Web App Build & Test</div>
+                        <div class="node-time">1m 45s</div>
+                      </div>
+                    </div>
+                    <!-- Pages-Build-Development -->
+                    <div class="pipeline-node-card status-success" id="node-pages" data-job="pages">
+                      <div class="node-status-icon"><i class="fa-solid fa-circle-check"></i></div>
+                      <div class="node-content">
+                        <div class="node-title">Pages-Build-Development</div>
+                        <div class="node-time">48s</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="pipeline-stage-column" data-stage="e2e">
+                  <div class="stage-column-title">E2E Testing</div>
+                  <div class="pipeline-node-wrapper">
+                    <!-- Appium E2E Tests -->
+                    <div class="pipeline-node-card status-success" id="node-appium" data-job="appium">
+                      <div class="node-status-icon"><i class="fa-solid fa-circle-check"></i></div>
+                      <div class="node-content">
+                        <div class="node-title">Appium E2E Tests</div>
+                        <div class="node-time">15m 5s</div>
+                      </div>
+                    </div>
+                    <!-- Selenium Web Tests -->
+                    <div class="pipeline-node-card status-success" id="node-selenium" data-job="selenium">
+                      <div class="node-status-icon"><i class="fa-solid fa-circle-check"></i></div>
+                      <div class="node-content">
+                        <div class="node-title">Selenium Web Tests</div>
+                        <div class="node-time">1m 22s</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="pipeline-stage-column" data-stage="load">
+                  <div class="stage-column-title">Load Testing</div>
+                  <div class="pipeline-node-wrapper">
+                    <!-- Load Tests -->
+                    <div class="pipeline-node-card status-success" id="node-load" data-job="load">
+                      <div class="node-status-icon"><i class="fa-solid fa-circle-check"></i></div>
+                      <div class="node-content">
+                        <div class="node-title">Load Tests</div>
+                        <div class="node-time">1m 0s</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="pipeline-stage-column" data-stage="staging">
+                  <div class="stage-column-title">Staging</div>
+                  <div class="pipeline-node-wrapper">
+                    <!-- Deploy Staging -->
+                    <div class="pipeline-node-card status-success" id="node-staging" data-job="staging">
+                      <div class="node-status-icon"><i class="fa-solid fa-circle-check"></i></div>
+                      <div class="node-content">
+                        <div class="node-title">Deploy Staging</div>
+                        <div class="node-time">30s</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="pipeline-stage-column" data-stage="prod">
+                  <div class="stage-column-title">Production</div>
+                  <div class="pipeline-node-wrapper">
+                    <!-- Deploy Production -->
+                    <div class="pipeline-node-card status-success" id="node-production" data-job="production">
+                      <div class="node-status-icon"><i class="fa-solid fa-circle-check"></i></div>
+                      <div class="node-content">
+                        <div class="node-title">Deploy Production</div>
+                        <div class="node-time">1m 15s</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Console Logs section -->
+              <div class="pipeline-logs-panel">
+                <div class="logs-panel-header">
+                  <span class="logs-title"><i class="fa-solid fa-terminal"></i> Job Logs: <span id="currentJobLogTitle">Android App Build & Test</span></span>
+                  <button class="btn-clear-logs" id="btnClearLogs">Clear Logs</button>
+                </div>
+                <div class="logs-content" id="logsContent">
+                  <!-- Terminals logs will display here -->
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 6. PROFILE TAB -->
         <div class="tab-pane" id="tab-profile">
           <div style="max-width: 600px; margin: 0 auto;">
             <div class="card profile-card">
