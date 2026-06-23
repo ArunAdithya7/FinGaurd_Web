@@ -13,6 +13,34 @@ permissions:
   id-token: write
 
 jobs:
+  # 0. Workflow Pipeline Visualizer
+  pipeline-flowchart:
+    name: Workflow Pipeline Flowchart
+    runs-on: ubuntu-latest
+    steps:
+      - name: Generate Workflow Flowchart
+        run: |
+          echo "## 🔄 FinGuard CI/CD Pipeline Workflow" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`mermaid" >> $GITHUB_STEP_SUMMARY
+          echo "graph TD" >> $GITHUB_STEP_SUMMARY
+          echo "    classDef build fill:#e1f5fe,stroke:#039be5,stroke-width:2px;" >> $GITHUB_STEP_SUMMARY
+          echo "    classDef test fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px;" >> $GITHUB_STEP_SUMMARY
+          echo "    classDef load fill:#fff8e1,stroke:#f57f17,stroke-width:2px;" >> $GITHUB_STEP_SUMMARY
+          echo "    classDef deploy fill:#ede7f6,stroke:#4527a0,stroke-width:2px;" >> $GITHUB_STEP_SUMMARY
+          echo "    Android[Android App Build & Test] --> Appium[Appium E2E Tests]" >> $GITHUB_STEP_SUMMARY
+          echo "    React[React Web App Build & Test] --> Selenium[Selenium Web Tests]" >> $GITHUB_STEP_SUMMARY
+          echo "    Pages[Pages-Build-Development] --> Load[Load Tests]" >> $GITHUB_STEP_SUMMARY
+          echo "    Appium --> Load" >> $GITHUB_STEP_SUMMARY
+          echo "    Selenium --> Load" >> $GITHUB_STEP_SUMMARY
+          echo "    Load --> Staging[Deploy Staging]" >> $GITHUB_STEP_SUMMARY
+          echo "    Staging --> Production[Deploy Production]" >> $GITHUB_STEP_SUMMARY
+          echo "    class Android,React,Pages build;" >> $GITHUB_STEP_SUMMARY
+          echo "    class Appium,Selenium test;" >> $GITHUB_STEP_SUMMARY
+          echo "    class Load load;" >> $GITHUB_STEP_SUMMARY
+          echo "    class Staging,Production deploy;" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+
   # 1. Android App Build & Test
   android-build-test:
     name: Android App Build & Test
