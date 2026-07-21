@@ -9,6 +9,7 @@ let profileData = null;
 
 // Chart Instances
 let homeChartInstance = null;
+let breakdownChartInstance = null;
 let forecastChartInstance = null;
 
 // Initialization
@@ -96,7 +97,7 @@ async function fetchHomeData() {
   // Populate Risk Score
   const score = dashboardData.risk_score || 0;
   document.getElementById('homeRiskScore').textContent = Math.round(score);
-  document.getElementById('homeRiskLevel').textContent = dashboardData.risk_level || 'Low';
+  document.getElementById('homeRiskLevel').textContent = dashboardData.risk_level || 'Neutral';
   
   // Set risk text description
   const riskDescEl = document.getElementById('homeRiskDesc');
@@ -129,6 +130,17 @@ async function fetchHomeData() {
   // Populate Line Graph (Chart.js)
   renderHomeChart(dashboardData.trend_labels || [], dashboardData.trend_scores || []);
 
+  // Populate Breakdown Doughnut Chart
+  renderBreakdownChart(
+    dashboardData.monthly_income || 0,
+    dashboardData.monthly_expense || 0,
+    dashboardData.monthly_debt || 0,
+    dashboardData.total_assets || 0
+  );
+
+  // Render Spending History & Activity Log
+  renderActivityHistory(dashboardData.recent_activity || []);
+
   // Populate Alerts
   const alertsList = document.getElementById('homeAlertsList');
   alertsList.innerHTML = '';
@@ -141,21 +153,34 @@ async function fetchHomeData() {
           <i class="fa-regular fa-circle-check"></i>
         </div>
         <div class="alert-details">
-          <div class="alert-title">No alerts found</div>
-          <div class="alert-subtitle">Your current financial status looks stable.</div>
+          <div class="alert-title">Financial Status Clear</div>
+          <div class="alert-subtitle">Your current account status is clean and healthy.</div>
         </div>
       </div>
     `;
   } else {
     alerts.forEach(alertText => {
+      let icon = 'fa-solid fa-triangle-exclamation';
+      let color = 'var(--warning)';
+      let bgColor = 'var(--warning-bg)';
+      if (alertText.includes('🔥') || alertText.includes('Deficit')) {
+        color = 'var(--danger)';
+        bgColor = 'rgba(239, 68, 68, 0.1)';
+        icon = 'fa-solid fa-fire';
+      } else if (alertText.includes('✅')) {
+        color = 'var(--success)';
+        bgColor = 'var(--success-bg)';
+        icon = 'fa-solid fa-circle-check';
+      }
+
       alertsList.innerHTML += `
         <div class="alert-item">
-          <div class="alert-icon-box" style="background-color: var(--warning-bg); color: var(--warning);">
-            <i class="fa-solid fa-triangle-exclamation"></i>
+          <div class="alert-icon-box" style="background-color: ${bgColor}; color: ${color}; display: flex; align-items: center; justify-content: center;">
+            <i class="${icon}"></i>
           </div>
           <div class="alert-details">
-            <div class="alert-title">${alertText}</div>
-            <div class="alert-subtitle">Generated from your latest financial data.</div>
+            <div class="alert-title" style="font-weight: 700; color: ${color};">${alertText}</div>
+            <div class="alert-subtitle">Real-time health indicator calculated from your latest entries.</div>
           </div>
         </div>
       `;
@@ -542,6 +567,130 @@ async function submitDebt(e) {
   } finally {
     showLoader(false);
   }
+}
+
+async function submitAsset(e) {
+  e.preventDefault();
+  const name = document.getElementById('assetName').value.trim();
+  const type = document.getElementById('assetType').value;
+  const amount = parseFloat(document.getElementById('assetAmount').value.trim());
+
+  showLoader(true);
+  try {
+    const res = await FinancialApi.addAsset(currentToken, name, amount, type);
+    if (res.success) {
+      showToast('Asset added successfully!', 'success');
+      closeModal('modalAsset');
+      document.getElementById('assetForm').reset();
+      await fetchHomeData();
+    } else {
+      showToast(res.message || 'Failed to add asset', 'error');
+    }
+  } catch (err) {
+    showToast(err.message || 'Failed to add asset', 'error');
+  } finally {
+    showLoader(false);
+  }
+}
+
+async function removeHistoryItem(rawType, index) {
+  if (confirm('Are you sure you want to remove this transaction entry?')) {
+    UserStore.removeEntry(rawType, index);
+    showToast('Entry removed successfully', 'success');
+    await fetchHomeData();
+  }
+}
+
+function renderActivityHistory(activities) {
+  const container = document.getElementById('activityHistoryList');
+  const countBadge = document.getElementById('activityCountBadge');
+  if (!container) return;
+
+  if (countBadge) {
+    countBadge.textContent = `${activities.length} entries`;
+  }
+
+  container.innerHTML = '';
+
+  if (activities.length === 0) {
+    container.innerHTML = `
+      <div class="alert-item">
+        <div class="alert-icon-box" style="background-color: var(--bg-hover); color: var(--text-muted);">
+          <i class="fa-solid fa-receipt"></i>
+        </div>
+        <div class="alert-details">
+          <div class="alert-title">No spending history recorded yet</div>
+          <div class="alert-subtitle">Use Quick Actions above to add incomes, expenses, assets, or liabilities.</div>
+        </div>
+      </div>
+    `;
+    return;
+  }
+
+  activities.forEach(item => {
+    const isPositive = item.amount > 0;
+    const amountStr = (isPositive ? '+' : '') + formatCurrency(item.amount);
+    const amountColor = isPositive ? 'var(--success)' : 'var(--danger)';
+
+    container.innerHTML += `
+      <div class="alert-item" style="display: flex; justify-content: space-between; align-items: center;">
+        <div style="display: flex; align-items: center; gap: 14px;">
+          <div class="alert-icon-box" style="background-color: ${item.color}15; color: ${item.color}; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+            <i class="fa-solid ${item.icon}"></i>
+          </div>
+          <div class="alert-details">
+            <div class="alert-title" style="font-weight: 700;">${item.title} <span style="font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 10px; background: ${item.color}18; color: ${item.color}; margin-left: 6px;">${item.badge}</span></div>
+            <div class="alert-subtitle">${item.notes} &bull; <span style="color: var(--text-muted);">${item.txDate}</span></div>
+          </div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 14px;">
+          <span style="font-size: 15px; font-weight: 800; color: ${amountColor};">${amountStr}</span>
+          <button onclick="removeHistoryItem('${item.rawType}', ${item.index})" style="background: none; border: none; color: var(--text-muted); cursor: pointer; padding: 6px; border-radius: 6px; font-size: 14px;" title="Remove entry">
+            <i class="fa-solid fa-trash-can"></i>
+          </button>
+        </div>
+      </div>
+    `;
+  });
+}
+
+function renderBreakdownChart(income, expense, debt, assets) {
+  const ctx = document.getElementById('breakdownChart').getContext('2d');
+
+  if (breakdownChartInstance) {
+    breakdownChartInstance.destroy();
+  }
+
+  const hasData = income > 0 || expense > 0 || debt > 0 || assets > 0;
+  const labels = hasData ? ['Monthly Income', 'Monthly Expense', 'Monthly Debt EMI', 'Total Assets'] : ['No Financial Data'];
+  const dataset = hasData ? [income, expense, debt, assets] : [1];
+  const colors = hasData ? ['#16a34a', '#ef4444', '#8250df', '#0969da'] : ['#e2e8f0'];
+
+  breakdownChartInstance = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels: labels,
+      datasets: [{
+        data: dataset,
+        backgroundColor: colors,
+        borderWidth: 2,
+        borderColor: '#ffffff'
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          position: 'right',
+          labels: {
+            font: { family: 'Outfit', weight: 600 }
+          }
+        }
+      },
+      cutout: '70%'
+    }
+  });
 }
 
 async function submitProfileEdit(e) {

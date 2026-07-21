@@ -50,6 +50,100 @@ const UserStore = {
     this.saveData(data);
   },
 
+  addAsset(name, amount, type) {
+    const data = this.getData();
+    data.assets.push({
+      name,
+      amount: parseFloat(amount),
+      type: type || 'Savings Account',
+      date: new Date().toISOString().split('T')[0]
+    });
+    this.saveData(data);
+  },
+
+  removeEntry(type, index) {
+    const data = this.getData();
+    if (data[type] && data[type][index] !== undefined) {
+      data[type].splice(index, 1);
+      this.saveData(data);
+    }
+  },
+
+  getActivityHistory() {
+    const data = this.getData();
+    const history = [];
+
+    data.incomes.forEach((item, idx) => {
+      history.push({
+        id: `inc_${idx}`,
+        type: 'income',
+        category: item.category || 'Income',
+        title: item.category || 'Income Deposit',
+        notes: item.notes || 'Income',
+        amount: item.amount,
+        txDate: item.txDate || new Date().toISOString().split('T')[0],
+        icon: 'fa-arrow-down',
+        color: '#1a7f37',
+        badge: 'Income',
+        rawType: 'incomes',
+        index: idx
+      });
+    });
+
+    data.expenses.forEach((item, idx) => {
+      history.push({
+        id: `exp_${idx}`,
+        type: 'expense',
+        category: item.category || 'Expense',
+        title: item.category || 'Expense',
+        notes: item.notes || 'Spending',
+        amount: -item.amount,
+        txDate: item.txDate || new Date().toISOString().split('T')[0],
+        icon: 'fa-arrow-up',
+        color: '#cf222e',
+        badge: 'Expense',
+        rawType: 'expenses',
+        index: idx
+      });
+    });
+
+    data.debts.forEach((item, idx) => {
+      history.push({
+        id: `debt_${idx}`,
+        type: 'debt',
+        category: 'Debt',
+        title: item.name || 'Liability',
+        notes: `Monthly EMI: ₹${item.payment.toLocaleString('en-IN')}`,
+        amount: -item.outstanding,
+        txDate: new Date().toISOString().split('T')[0],
+        icon: 'fa-credit-card',
+        color: '#8250df',
+        badge: 'Liability',
+        rawType: 'debts',
+        index: idx
+      });
+    });
+
+    data.assets.forEach((item, idx) => {
+      history.push({
+        id: `asset_${idx}`,
+        type: 'asset',
+        category: item.type || 'Asset',
+        title: item.name || 'Asset Holdings',
+        notes: item.type || 'Asset Holdings',
+        amount: item.amount,
+        txDate: item.date || new Date().toISOString().split('T')[0],
+        icon: 'fa-vault',
+        color: '#0969da',
+        badge: 'Asset',
+        rawType: 'assets',
+        index: idx
+      });
+    });
+
+    return history.sort((a, b) => new Date(b.txDate) - new Date(a.txDate));
+  },
+
   calculate() {
     const data = this.getData();
     const totalIncome = data.incomes.reduce((sum, item) => sum + item.amount, 0);
@@ -82,12 +176,13 @@ const UserStore = {
 
     const alerts = [];
     if (!hasData) {
-      alerts.push('Welcome! Add your income, expenses, or debt to calculate your real-time risk score.');
+      alerts.push('Welcome! Add your income, expenses, assets, or debt to calculate your real-time risk score.');
     } else {
-      if (expenseRatio > 40) alerts.push('High Expense Ratio: Spending over 40% of income.');
-      if (debtRatio > 35) alerts.push('High Debt Ratio: Over 35% of income goes to debt payments.');
-      if (monthlySurplus < 0) alerts.push('Deficit Alert: Monthly expenses exceed total income.');
-      if (alerts.length === 0) alerts.push('Your financial status is currently healthy.');
+      if (expenseRatio > 40) alerts.push('⚠️ High Expense Ratio: Spending over 40% of income.');
+      if (debtRatio > 35) alerts.push('🚨 High Debt Ratio: Over 35% of income goes to debt payments.');
+      if (monthlySurplus < 0) alerts.push('🔥 Deficit Alert: Monthly expenses exceed total income!');
+      if (savingsRunway < 3 && totalExpense > 0) alerts.push('🛡️ Low Savings Runway: Less than 3 months of emergency buffer.');
+      if (alerts.length === 0) alerts.push('✅ Healthy Financial Status: Your cash flow and risk levels are well balanced.');
     }
 
     return {
@@ -104,6 +199,7 @@ const UserStore = {
       debt_ratio: debtRatio,
       monthly_surplus: monthlySurplus,
       alerts: alerts,
+      recent_activity: this.getActivityHistory(),
       trend_labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
       trend_scores: hasData ? [riskScore, riskScore, riskScore, riskScore, riskScore, riskScore] : [0, 0, 0, 0, 0, 0]
     };
@@ -244,6 +340,10 @@ const Api = {
         UserStore.addDebt(body.liability_name, body.outstanding_amount, body.monthly_payment, body.interest_rate);
         return { success: true, message: 'Debt added successfully' };
       }
+      if (endpoint === '/financial/asset') {
+        UserStore.addAsset(body.asset_name, body.amount, body.asset_type);
+        return { success: true, message: 'Asset added successfully' };
+      }
       return { success: true };
     }
   }
@@ -342,6 +442,14 @@ const FinancialApi = {
       outstanding_amount: outstandingAmount,
       monthly_payment: monthlyPayment,
       interest_rate: interestRate
+    }, token);
+  },
+
+  async addAsset(token, assetName, amount, assetType = 'Savings Account') {
+    return Api.postOrPut('/financial/asset', 'POST', {
+      asset_name: assetName,
+      amount: amount,
+      asset_type: assetType
     }, token);
   }
 };

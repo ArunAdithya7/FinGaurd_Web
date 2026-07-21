@@ -129,50 +129,80 @@
               </div>
             </div>
 
-            <!-- Chart Card -->
-            <div class="card chart-card">
-              <h3>Risk Score Trend</h3>
-              <div class="chart-container">
-                <canvas id="riskTrendChart"></canvas>
+            <!-- Charts Container Grid -->
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px;">
+              <!-- Risk Trend Chart Card -->
+              <div class="card chart-card">
+                <h3 style="font-size: 18px; font-weight: 800; margin-bottom: 12px;">Risk Score Trend</h3>
+                <div class="chart-container" style="height: 230px;">
+                  <canvas id="riskTrendChart"></canvas>
+                </div>
+              </div>
+
+              <!-- Financial Breakdown Doughnut Chart Card -->
+              <div class="card chart-card">
+                <h3 style="font-size: 18px; font-weight: 800; margin-bottom: 12px;">Financial Breakdown</h3>
+                <div class="chart-container" style="height: 230px;">
+                  <canvas id="breakdownChart"></canvas>
+                </div>
               </div>
             </div>
 
-            <!-- Quick Actions & Alerts -->
+            <!-- Quick Actions & Recent Activity Container -->
             <div style="display: flex; flex-direction: column; gap: 20px;">
               <div class="card">
                 <h3 style="font-size: 18px; font-weight: 800; margin-bottom: 16px;">Quick Actions</h3>
-                <div class="actions-grid">
-                  <div class="action-tile" onclick="openModal('modalExpense')">
-                    <i class="fa-solid fa-circle-minus" style="color: var(--danger);"></i>
-                    <span class="action-label">Add Expense</span>
-                  </div>
+                <div class="actions-grid" style="grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 12px;">
                   <div class="action-tile" onclick="openModal('modalIncome')">
                     <i class="fa-solid fa-circle-plus" style="color: var(--success);"></i>
-                    <span class="action-label">Add Income</span>
+                    <span class="action-label">+ Add Income</span>
+                  </div>
+                  <div class="action-tile" onclick="openModal('modalExpense')">
+                    <i class="fa-solid fa-circle-minus" style="color: var(--danger);"></i>
+                    <span class="action-label">- Add Expense</span>
+                  </div>
+                  <div class="action-tile" onclick="openModal('modalAsset')">
+                    <i class="fa-solid fa-vault" style="color: var(--primary);"></i>
+                    <span class="action-label">+ Add Asset</span>
                   </div>
                   <div class="action-tile" onclick="openModal('modalDebt')">
                     <i class="fa-solid fa-credit-card" style="color: var(--warning);"></i>
-                    <span class="action-label">Add Debt</span>
+                    <span class="action-label">+ Add Liability</span>
                   </div>
-                  <div class="action-tile" onclick="switchTab('forecast')">
-                    <i class="fa-solid fa-arrow-trend-up"></i>
-                    <span class="action-label">Forecast</span>
+                </div>
+              </div>
+
+              <!-- Spending History & Activity Log Card -->
+              <div class="card" style="grid-column: span 2;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                  <h3 style="font-size: 18px; font-weight: 800; margin: 0;">Recent Transactions & Activity Log</h3>
+                  <span id="activityCountBadge" style="font-size: 12px; background: var(--bg-hover); padding: 4px 10px; border-radius: 12px; color: var(--text-secondary); font-weight: 600;">0 entries</span>
+                </div>
+                <div class="alerts-list" id="activityHistoryList">
+                  <div class="alert-item">
+                    <div class="alert-icon-box" style="background-color: var(--bg-hover); color: var(--text-muted);">
+                      <i class="fa-solid fa-receipt"></i>
+                    </div>
+                    <div class="alert-details">
+                      <div class="alert-title">No spending history recorded yet</div>
+                      <div class="alert-subtitle">Use Quick Actions above to add incomes, expenses, assets, or liabilities.</div>
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
 
-            <!-- Alerts Card -->
+            <!-- Smart AI Alerts Card -->
             <div class="card" style="grid-column: span 2;">
-              <h3 style="font-size: 18px; font-weight: 800; margin-bottom: 16px;">Latest Alerts</h3>
+              <h3 style="font-size: 18px; font-weight: 800; margin-bottom: 16px;">Smart Financial Health Alerts</h3>
               <div class="alerts-list" id="homeAlertsList">
                 <div class="alert-item">
                   <div class="alert-icon-box" style="background-color: var(--success-bg); color: var(--success);">
                     <i class="fa-regular fa-circle-check"></i>
                   </div>
                   <div class="alert-details">
-                    <div class="alert-title">No alerts found</div>
-                    <div class="alert-subtitle">Your current financial status looks stable.</div>
+                    <div class="alert-title">Financial Status Stable</div>
+                    <div class="alert-subtitle">Your initial account status is clear. Add your monthly transactions to begin tracking.</div>
                   </div>
                 </div>
               </div>
@@ -433,6 +463,38 @@
         <div class="modal-footer">
           <button type="button" class="btn btn-modal-cancel" onclick="closeModal('modalIncome')">Cancel</button>
           <button type="submit" class="btn btn-primary btn-modal-submit">Add Income</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Add Asset Modal -->
+  <div class="modal" id="modalAsset">
+    <div class="modal-content">
+      <button class="modal-close" onclick="closeModal('modalAsset')">&times;</button>
+      <h3 class="modal-title">Add Asset</h3>
+      <form id="assetForm" onsubmit="submitAsset(event)">
+        <div class="form-group">
+          <label class="form-label" for="assetName">Asset Name</label>
+          <input type="text" id="assetName" class="form-control" placeholder="e.g. Savings Account, Mutual Funds" required style="padding-left: 14px;">
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="assetType">Asset Type</label>
+          <select id="assetType" class="form-control" style="padding-left: 14px;">
+            <option value="Savings Account">Savings / Cash</option>
+            <option value="Investments">Mutual Funds / Stocks</option>
+            <option value="Real Estate">Property / Real Estate</option>
+            <option value="Gold">Gold & Commodities</option>
+            <option value="Fixed Deposit">Fixed Deposit (FD)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="assetAmount">Current Value (₹)</label>
+          <input type="number" id="assetAmount" class="form-control" placeholder="0.00" required style="padding-left: 14px;">
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-modal-cancel" onclick="closeModal('modalAsset')">Cancel</button>
+          <button type="submit" class="btn btn-primary btn-modal-submit">Add Asset</button>
         </div>
       </form>
     </div>
