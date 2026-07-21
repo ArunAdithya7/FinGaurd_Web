@@ -64,11 +64,22 @@
     <div class="main-wrapper">
       <header class="top-navbar">
         <div class="navbar-title" id="navTitle">Dashboard</div>
-        <div class="navbar-actions">
-          <button class="notify-bell">
+        <div class="navbar-actions" style="position: relative;">
+          <button class="notify-bell" id="btnNotifyBell" onclick="toggleNotificationDropdown(event)">
             <i class="fa-regular fa-bell"></i>
-            <span class="notify-badge"></span>
+            <span class="notify-badge" id="navNotifyBadge" style="display: none; background: #ef4444; width: 10px; height: 10px; border-radius: 50%; position: absolute; top: 6px; right: 6px;"></span>
           </button>
+
+          <!-- Notification Dropdown Menu -->
+          <div class="notification-dropdown" id="notificationDropdown">
+            <div class="dropdown-header">
+              <span class="dropdown-title"><i class="fa-solid fa-bell" style="color: var(--primary);"></i> Alerts & Notifications</span>
+              <span class="mark-read-btn" onclick="clearNotifications()">Clear All</span>
+            </div>
+            <div class="dropdown-body" id="notificationDropdownBody">
+              <div style="padding: 18px; text-align: center; color: var(--text-muted); font-size: 13px;">No notifications found</div>
+            </div>
+          </div>
         </div>
       </header>
 

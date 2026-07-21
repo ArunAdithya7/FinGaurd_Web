@@ -879,60 +879,51 @@ def recommendations_summary(user_id: int = Depends(get_current_user_id)):
         level = risk_level(score)
 
         recommendations = []
+        target_emergency_fund = max(10000.0, monthly_expense * 6.0)
+        emergency_progress = min(100, round((total_assets / target_emergency_fund) * 100)) if target_emergency_fund > 0 else 0
+
+        recommendations.append({
+            "title": "Emergency Fund Reserve",
+            "description": f"Your current savings cover {savings_runway} months of expenses. Target emergency fund: ₹{int(target_emergency_fund):,}.",
+            "impact": emergency_progress
+        })
 
         if expense_ratio > 40:
             recommendations.append({
-                "title": "Reduce spending",
-                "description": "Your expense ratio is too high. Cut non-essential spending.",
-                "impact": expense_ratio
+                "title": "Reduce Discretionary Spending",
+                "description": f"Expense ratio is {expense_ratio}%. Cut non-essential spending to lower it below 40%.",
+                "impact": min(100, round(expense_ratio))
             })
 
-        if debt_ratio > 35:
+        if debt_ratio > 25:
             recommendations.append({
-                "title": "Lower debt burden",
-                "description": "Debt payments are heavy. Try paying high-interest debt first.",
-                "impact": debt_ratio
+                "title": "Accelerated Debt Payoff",
+                "description": f"Debt ratio is {debt_ratio}%. Allocate surplus toward principal debt reduction.",
+                "impact": min(100, round(debt_ratio * 1.5))
             })
 
-        if savings_runway < 1:
+        if monthly_surplus > 0:
+            rec_invest = round(monthly_surplus * 0.6)
             recommendations.append({
-                "title": "Build emergency fund",
-                "description": "Your savings runway is low. Save for at least 1 to 3 months of expenses.",
-                "impact": 100 - min(savings_runway * 30, 100)
-            })
-
-        if monthly_surplus < 0:
-            recommendations.append({
-                "title": "Fix negative cash flow",
-                "description": "You are spending more than you earn. Review your budget immediately.",
-                "impact": 100
-            })
-
-        if total_assets < monthly_expense * 2:
-            recommendations.append({
-                "title": "Increase savings",
-                "description": "Your liquid savings are low compared to monthly spending.",
-                "impact": 70
-            })
-
-        if not recommendations:
-            recommendations.append({
-                "title": "Keep tracking monthly",
-                "description": "Your current financial position looks stable. Continue monitoring regularly.",
-                "impact": 10
+                "title": "Wealth Building & SIP Investment",
+                "description": f"Invest ₹{int(rec_invest):,} monthly in low-cost index funds or mutual funds.",
+                "impact": min(100, round((monthly_surplus / (monthly_income if monthly_income > 0 else 1)) * 100))
             })
 
         priority_actions = []
         if monthly_surplus < 0:
-            priority_actions.append("Stop unnecessary expenses immediately.")
+            priority_actions.append("🔥 Stop non-essential spending to eliminate monthly deficit.")
         if debt_ratio > 35:
-            priority_actions.append("Pay high-interest debt first.")
-        if savings_runway < 1:
-            priority_actions.append("Increase emergency savings this month.")
+            priority_actions.append("🚨 Pay off high-interest debt using Debt Avalanche method.")
+        if savings_runway < 3:
+            priority_actions.append("🛡️ Allocate surplus to build 3 to 6 months of emergency reserves.")
         if expense_ratio > 40:
-            priority_actions.append("Reduce discretionary spending.")
+            priority_actions.append("⚠️ Reduce monthly subscriptions and eating out.")
+        if monthly_surplus > 0:
+            priority_actions.append(f"💡 Automate monthly SIP investment of ₹{int(round(monthly_surplus * 0.5)):,}.")
 
         if not priority_actions:
+            priority_actions.append("✅ Continue tracking monthly cash flow to maintain financial health.")
             priority_actions.append("Maintain your current spending discipline.")
 
         return {

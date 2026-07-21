@@ -975,3 +975,103 @@ function handleLogout() {
   localStorage.clear();
   window.location.href = 'login.html';
 }
+
+// Notification Bell Dropdown Handlers
+function toggleNotificationDropdown(e) {
+  if (e) e.stopPropagation();
+  const dropdown = document.getElementById('notificationDropdown');
+  if (!dropdown) return;
+
+  const isActive = dropdown.classList.contains('active');
+  if (isActive) {
+    dropdown.classList.remove('active');
+  } else {
+    dropdown.classList.add('active');
+    populateNotificationsDropdown();
+  }
+}
+
+document.addEventListener('click', (e) => {
+  const dropdown = document.getElementById('notificationDropdown');
+  const bell = document.getElementById('btnNotifyBell');
+  if (dropdown && dropdown.classList.contains('active')) {
+    if (!dropdown.contains(e.target) && !bell.contains(e.target)) {
+      dropdown.classList.remove('active');
+    }
+  }
+});
+
+function populateNotificationsDropdown() {
+  const body = document.getElementById('notificationDropdownBody');
+  const badge = document.getElementById('navNotifyBadge');
+  if (!body) return;
+
+  const alerts = (dashboardData && dashboardData.alerts) ? dashboardData.alerts : [];
+  const activities = (dashboardData && dashboardData.recent_activity) ? dashboardData.recent_activity : [];
+
+  if (badge) {
+    if (alerts.length > 0 && !alerts[0].includes('Clear') && !alerts[0].includes('Healthy')) {
+      badge.style.display = 'block';
+    } else {
+      badge.style.display = 'none';
+    }
+  }
+
+  body.innerHTML = '';
+
+  if (alerts.length === 0 && activities.length === 0) {
+    body.innerHTML = `<div style="padding: 24px; text-align: center; color: var(--text-muted); font-size: 13px;">No unread alerts or notifications</div>`;
+    return;
+  }
+
+  alerts.forEach(alertText => {
+    let icon = 'fa-triangle-exclamation';
+    let color = 'var(--warning)';
+    let bg = 'var(--warning-bg)';
+    if (alertText.includes('Deficit') || alertText.includes('🔥')) {
+      icon = 'fa-fire';
+      color = 'var(--danger)';
+      bg = 'rgba(239, 68, 68, 0.1)';
+    } else if (alertText.includes('✅') || alertText.includes('Clear') || alertText.includes('Healthy')) {
+      icon = 'fa-circle-check';
+      color = 'var(--success)';
+      bg = 'var(--success-bg)';
+    }
+
+    body.innerHTML += `
+      <div class="dropdown-item">
+        <div class="dropdown-item-icon" style="background: ${bg}; color: ${color};">
+          <i class="fa-solid ${icon}"></i>
+        </div>
+        <div class="dropdown-item-info">
+          <div class="dropdown-item-title">${alertText}</div>
+          <div class="dropdown-item-sub">Real-time health alert</div>
+        </div>
+      </div>
+    `;
+  });
+
+  activities.slice(0, 3).forEach(act => {
+    body.innerHTML += `
+      <div class="dropdown-item">
+        <div class="dropdown-item-icon" style="background: ${act.color}15; color: ${act.color};">
+          <i class="fa-solid ${act.icon}"></i>
+        </div>
+        <div class="dropdown-item-info">
+          <div class="dropdown-item-title">Entry Logged: ${act.title}</div>
+          <div class="dropdown-item-sub">${act.notes} &bull; ${act.txDate}</div>
+        </div>
+      </div>
+    `;
+  });
+}
+
+function clearNotifications() {
+  const body = document.getElementById('notificationDropdownBody');
+  const badge = document.getElementById('navNotifyBadge');
+  if (badge) badge.style.display = 'none';
+  if (body) {
+    body.innerHTML = `<div style="padding: 24px; text-align: center; color: var(--text-muted); font-size: 13px;"><i class="fa-solid fa-circle-check" style="color: var(--success); font-size: 20px; margin-bottom: 6px; display: block;"></i> All notifications cleared</div>`;
+  }
+  showToast('Notifications marked as read', 'success');
+}

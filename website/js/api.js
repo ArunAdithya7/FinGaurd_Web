@@ -3,8 +3,12 @@ const BASE_URL = 'https://lemon-pigs-feel.loca.lt';
 // Dynamic Local Storage Data Store for GitHub Pages & Offline Mode
 const UserStore = {
   getStorageKey() {
-    const user = JSON.parse(localStorage.getItem('user_data') || '{}');
-    return `finguard_data_${user.email || 'default'}`;
+    let email = 'default';
+    try {
+      const user = JSON.parse(localStorage.getItem('user_data') || '{}');
+      email = user.email || user.identifier || localStorage.getItem('user_email') || 'default';
+    } catch (e) {}
+    return `finguard_data_${email.toLowerCase().replace(/[^a-z0-9]/g, '_')}`;
   },
 
   getData() {
