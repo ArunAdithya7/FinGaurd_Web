@@ -203,41 +203,41 @@ def month_bounds(year: int, month: int):
 
 def calculate_risk_score(monthly_income, monthly_expense, monthly_debt, liquid_assets, total_liabilities):
     if monthly_income <= 0 and monthly_expense <= 0 and monthly_debt <= 0 and liquid_assets <= 0 and total_liabilities <= 0:
-        return 0
+        return 32
 
     score = 0
 
     if monthly_income > 0:
         expense_ratio = (monthly_expense / monthly_income) * 100
         debt_ratio = (monthly_debt / monthly_income) * 100
-        score += min(expense_ratio * 0.5, 35)
-        score += min(debt_ratio * 0.6, 30)
+        score += min(expense_ratio * 0.4, 30)
+        score += min(debt_ratio * 0.5, 25)
 
         surplus = monthly_income - monthly_expense - monthly_debt
         if surplus < 0:
-            score += 25
+            score += 20
     else:
-        if monthly_expense > 0 or monthly_debt > 0 or total_liabilities > 0:
-            score += 70
+        if monthly_expense > 0 or monthly_debt > 0:
+            score += 45
 
     if monthly_expense > 0:
         runway = liquid_assets / monthly_expense
         if runway < 1:
-            score += 20
+            score += 15
         elif runway < 3:
-            score += 10
+            score += 8
         elif runway >= 6:
-            score -= 15
+            score -= 10
 
     if liquid_assets > 0:
-        asset_bonus = min((liquid_assets / 100000) * 10, 20)
+        asset_bonus = min((liquid_assets / 100000) * 8, 20)
         score -= asset_bonus
 
-    if total_liabilities > 0:
-        debt_penalty = min((total_liabilities / 100000) * 8, 20)
+    if total_liabilities > 0 and monthly_income > 0:
+        debt_penalty = min((total_liabilities / 100000) * 5, 15)
         score += debt_penalty
 
-    return max(0, min(100, round(score)))
+    return max(15, min(95, round(score)))
 
 
 def risk_level(score: int):
@@ -469,21 +469,38 @@ def dashboard_summary(user_id: int = Depends(get_current_user_id)):
         )
 
         liquid_assets = total_assets
-        expense_ratio = round((monthly_expense / monthly_income) * 100, 1) if monthly_income > 0 else 0
-        debt_ratio = round((monthly_debt / monthly_income) * 100, 1) if monthly_income > 0 else 0
-        savings_runway = round(liquid_assets / monthly_expense, 1) if monthly_expense > 0 else 0
-        monthly_surplus = round(monthly_income - monthly_expense - monthly_debt, 2)
+        has_data = monthly_income > 0 or monthly_expense > 0 or monthly_debt > 0 or total_assets > 0 or total_liabilities > 0
 
-        score = calculate_risk_score(
-            monthly_income=monthly_income,
-            monthly_expense=monthly_expense,
-            monthly_debt=monthly_debt,
-            liquid_assets=liquid_assets,
-            total_liabilities=total_liabilities
-        )
+        if not has_data:
+            monthly_income = 50000.0
+            monthly_expense = 18000.0
+            monthly_debt = 5000.0
+            total_assets = 85000.0
+            total_liabilities = 120000.0
+            liquid_assets = 85000.0
+            expense_ratio = 36.0
+            debt_ratio = 10.0
+            savings_runway = 4.7
+            monthly_surplus = 27000.0
+            score = 32
+            level = "Low"
+            alerts = ["✅ Welcome to FinGuard! Default baseline figures loaded. Add entries to customize."]
+        else:
+            expense_ratio = round((monthly_expense / monthly_income) * 100, 1) if monthly_income > 0 else 0
+            debt_ratio = round((monthly_debt / monthly_income) * 100, 1) if monthly_income > 0 else 0
+            savings_runway = round(liquid_assets / monthly_expense, 1) if monthly_expense > 0 else 0
+            monthly_surplus = round(monthly_income - monthly_expense - monthly_debt, 2)
 
-        level = risk_level(score)
-        alerts = build_alerts(expense_ratio, debt_ratio, savings_runway, monthly_surplus)
+            score = calculate_risk_score(
+                monthly_income=monthly_income,
+                monthly_expense=monthly_expense,
+                monthly_debt=monthly_debt,
+                liquid_assets=liquid_assets,
+                total_liabilities=total_liabilities
+            )
+
+            level = risk_level(score)
+            alerts = build_alerts(expense_ratio, debt_ratio, savings_runway, monthly_surplus)
 
         # trend for last 6 months
         trend_labels = []
