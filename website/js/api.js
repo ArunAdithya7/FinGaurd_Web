@@ -378,16 +378,17 @@ const Api = {
     };
     if (token) headers['Authorization'] = `Bearer ${token}`;
 
-      if (endpoint === '/financial/income') {
-        UserStore.addIncome(body.category, body.amount, body.notes, body.tx_date);
-      } else if (endpoint === '/financial/expense') {
-        UserStore.addExpense(body.category, body.amount, body.notes, body.tx_date);
-      } else if (endpoint === '/financial/liability') {
-        UserStore.addDebt(body.liability_name, body.outstanding_amount, body.monthly_payment, body.interest_rate);
-      } else if (endpoint === '/financial/asset') {
-        UserStore.addAsset(body.asset_name, body.amount, body.asset_type);
-      }
+    if (endpoint === '/financial/income') {
+      UserStore.addIncome(body.category, body.amount, body.notes, body.tx_date);
+    } else if (endpoint === '/financial/expense') {
+      UserStore.addExpense(body.category, body.amount, body.notes, body.tx_date);
+    } else if (endpoint === '/financial/liability') {
+      UserStore.addDebt(body.liability_name, body.outstanding_amount, body.monthly_payment, body.interest_rate);
+    } else if (endpoint === '/financial/asset') {
+      UserStore.addAsset(body.asset_name, body.amount, body.asset_type);
+    }
 
+    try {
       const response = await fetch(`${BASE_URL}${endpoint}`, {
         method: method,
         headers: headers,
@@ -401,7 +402,7 @@ const Api = {
     } catch (err) {
       console.warn(`[Dynamic Store] Backend response sync for ${endpoint}:`, err);
       if (endpoint === '/auth/login') {
-        const userObj = { full_name: body.identifier.split('@')[0] || 'User', email: body.identifier };
+        const userObj = { full_name: (body.identifier || 'User').split('@')[0], email: body.identifier };
         localStorage.setItem('user_data', JSON.stringify(userObj));
         return { success: true, token: 'mock_token', user: userObj };
       }
