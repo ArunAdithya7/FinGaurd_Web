@@ -269,18 +269,51 @@ function getMockDataFor(endpoint) {
     };
   }
   if (endpoint.includes('/forecast/summary')) {
+    const data = UserStore.getData();
+    const hasData = data.incomes.length > 0 || data.expenses.length > 0 || data.debts.length > 0 || data.assets.length > 0;
+    const baseScore = hasData ? Math.max(12, calc.risk_score) : 0;
+    const proj30 = hasData ? Math.min(100, Math.max(10, Math.round(baseScore * 0.95))) : 0;
+    const proj60 = hasData ? Math.min(100, Math.max(10, Math.round(baseScore * 1.05))) : 0;
+    const proj90 = hasData ? Math.min(100, Math.max(10, Math.round(baseScore * 1.15))) : 0;
+
+    const getLvl = (s) => (s === 0 ? 'Neutral' : s < 30 ? 'Low' : s < 60 ? 'Moderate' : 'High');
+
     return {
       success: true,
-      current_risk_score: calc.risk_score,
-      current_risk_level: calc.risk_level,
+      current_risk_score: baseScore,
+      current_risk_level: hasData ? calc.risk_level : 'Neutral',
       projections: [
-        { days: 30, risk_score: calc.risk_score, risk_level: calc.risk_level, message: 'Projected 30-day outlook based on current activity.', projected_savings: calc.total_assets + calc.monthly_surplus, projected_surplus: calc.monthly_surplus },
-        { days: 60, risk_score: calc.risk_score, risk_level: calc.risk_level, message: 'Projected 60-day outlook.', projected_savings: calc.total_assets + (calc.monthly_surplus * 2), projected_surplus: calc.monthly_surplus },
-        { days: 90, risk_score: calc.risk_score, risk_level: calc.risk_level, message: 'Projected 90-day outlook.', projected_savings: calc.total_assets + (calc.monthly_surplus * 3), projected_surplus: calc.monthly_surplus }
+        {
+          days: 30,
+          risk_score: proj30,
+          risk_level: getLvl(proj30),
+          message: hasData ? 'Projected 30-day financial path based on cash flow.' : 'Add transactions to calculate 30-day forecast.',
+          projected_savings: calc.total_assets + calc.monthly_surplus,
+          projected_surplus: calc.monthly_surplus
+        },
+        {
+          days: 60,
+          risk_score: proj60,
+          risk_level: getLvl(proj60),
+          message: hasData ? 'Projected 60-day path with inflation adjustment.' : 'Add transactions to calculate 60-day forecast.',
+          projected_savings: calc.total_assets + (calc.monthly_surplus * 2),
+          projected_surplus: calc.monthly_surplus
+        },
+        {
+          days: 90,
+          risk_score: proj90,
+          risk_level: getLvl(proj90),
+          message: hasData ? 'Projected 90-day long-term cash reserve path.' : 'Add transactions to calculate 90-day forecast.',
+          projected_savings: calc.total_assets + (calc.monthly_surplus * 3),
+          projected_surplus: calc.monthly_surplus
+        }
       ],
-      chart_scores: [calc.risk_score, calc.risk_score, calc.risk_score, calc.risk_score],
-      recommendations: [
-        'Maintain positive monthly surplus to grow your emergency fund.'
+      chart_scores: hasData ? [baseScore, proj30, proj60, proj90] : [0, 0, 0, 0],
+      recommendations: hasData ? [
+        'Maintain a positive monthly surplus to build your emergency reserve.',
+        'Keep discretionary expenses low to optimize long-term 90-day stability.'
+      ] : [
+        'Start logging your monthly income and expenses to track future forecasts.'
       ]
     };
   }

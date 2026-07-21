@@ -720,46 +720,46 @@ def forecast_summary(user_id: int = Depends(get_current_user_id)):
             liquid_assets=total_assets,
             total_liabilities=total_liabilities
         )
-        current_level = risk_level(current_score)
+        has_data = monthly_income > 0 or monthly_expense > 0 or total_assets > 0 or total_liabilities > 0
+        base_score = current_score if has_data else 0
+        current_level = risk_level(base_score)
 
         projections = []
-        chart_scores = [float(max(0, current_score - 8)), float(max(0, current_score - 4)), float(current_score), float(min(100, current_score + 6))]
+        proj_scores = []
 
         for days in [30, 60, 90]:
             months = days / 30.0
 
             projected_income = monthly_income
-            projected_expense = monthly_expense * (1 + 0.06 * months)
+            projected_expense = monthly_expense * (1 + 0.04 * months)
             projected_debt = monthly_debt
             projected_surplus = projected_income - projected_expense - projected_debt
 
-            projected_assets = total_assets + (current_surplus * months)
-            if projected_assets < 0:
-                projected_assets = 0
+            projected_assets = max(0, total_assets + (current_surplus * months))
 
-            projected_score = calculate_risk_score(
-                monthly_income=projected_income,
-                monthly_expense=projected_expense,
-                monthly_debt=projected_debt,
-                liquid_assets=projected_assets,
-                total_liabilities=total_liabilities
-            )
-
-            if projected_score < 25:
-                proj_level = "Low"
-            elif projected_score < 50:
-                proj_level = "Moderate"
-            elif projected_score < 75:
-                proj_level = "High"
+            if has_data:
+                calc_s = calculate_risk_score(
+                    monthly_income=projected_income,
+                    monthly_expense=projected_expense,
+                    monthly_debt=projected_debt,
+                    liquid_assets=projected_assets,
+                    total_liabilities=total_liabilities
+                )
+                projected_score = max(10, min(100, calc_s if calc_s > 0 else round(base_score + (months * 2))))
             else:
-                proj_level = "Critical"
+                projected_score = 0
+
+            proj_level = risk_level(projected_score)
+            proj_scores.append(float(projected_score))
 
             if projected_score >= 75:
                 message = "High distress risk if current spending continues."
             elif projected_score >= 50:
                 message = "Risk is rising. Control spending and debt."
+            elif has_data:
+                message = "Current financial trend looks manageable."
             else:
-                message = "Current trend looks manageable."
+                message = "Add transactions to calculate 30/60/90-day forecast."
 
             projections.append({
                 "days": days,
@@ -769,6 +769,8 @@ def forecast_summary(user_id: int = Depends(get_current_user_id)):
                 "projected_surplus": round(projected_surplus, 2),
                 "message": message
             })
+
+        chart_scores = [float(base_score)] + proj_scores
 
         recommendations = []
         if monthly_expense > monthly_income * 0.4:
