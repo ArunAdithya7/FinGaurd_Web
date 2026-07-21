@@ -1,4 +1,4 @@
-const BASE_URL = 'http://localhost:8000';
+const BASE_URL = 'https://lemon-pigs-feel.loca.lt';
 
 // Dynamic Local Storage Data Store for GitHub Pages & Offline Mode
 const UserStore = {
@@ -191,7 +191,8 @@ const Api = {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+          'Authorization': `Bearer ${token}`,
+          'bypass-tunnel-reminder': 'true'
         }
       });
       const data = await response.json();
@@ -207,7 +208,10 @@ const Api = {
 
   // Helper for POST/PUT requests with Bearer Token
   async postOrPut(endpoint, method, body, token = null) {
-    const headers = { 'Content-Type': 'application/json' };
+    const headers = { 
+      'Content-Type': 'application/json',
+      'bypass-tunnel-reminder': 'true'
+    };
     if (token) headers['Authorization'] = `Bearer ${token}`;
 
     try {

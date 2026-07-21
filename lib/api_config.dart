@@ -3,6 +3,7 @@ import 'package:http/http.dart' as http;
 
 class ApiConfig {
   static const List<String> candidateUrls = [
+    "https://lemon-pigs-feel.loca.lt",
     "http://10.0.2.2:8000",
     "http://172.23.49.230:8000",
     "http://localhost:8000",
@@ -18,6 +19,7 @@ class ApiConfig {
           headers: {
             'Content-Type': 'application/json',
             'Authorization': 'Bearer $token',
+            'bypass-tunnel-reminder': 'true',
           },
         ).timeout(const Duration(seconds: 4));
         return response;
@@ -37,7 +39,10 @@ class ApiConfig {
     for (final base in candidateUrls) {
       try {
         final url = Uri.parse('$base$endpoint');
-        final headers = <String, String>{'Content-Type': 'application/json'};
+        final headers = <String, String>{
+          'Content-Type': 'application/json',
+          'bypass-tunnel-reminder': 'true',
+        };
         if (token != null && token.isNotEmpty) {
           headers['Authorization'] = 'Bearer $token';
         }
@@ -65,7 +70,10 @@ class ApiConfig {
     for (final base in candidateUrls) {
       try {
         final url = Uri.parse('$base$endpoint');
-        final headers = <String, String>{'Content-Type': 'application/json'};
+        final headers = <String, String>{
+          'Content-Type': 'application/json',
+          'bypass-tunnel-reminder': 'true',
+        };
         if (token != null && token.isNotEmpty) {
           headers['Authorization'] = 'Bearer $token';
         }
