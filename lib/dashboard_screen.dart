@@ -410,16 +410,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   },
                 ),
 
-                _drawerItem(
-                  Icons.account_balance_wallet_outlined,
-                  'Investments',
-                  false,
-                ),
-
-                _drawerItem(Icons.receipt_long_outlined, 'Reports', false),
-
-                _drawerItem(Icons.settings_outlined, 'Settings', false),
-
                 const Spacer(),
 
                 _drawerItem(
@@ -750,40 +740,54 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
                       children: [
                         _ActionTile(
-                          icon: Icons.add_circle_outline,
-                          label: 'Add Expense',
-                          onTap: () {},
-                        ),
-
-                        _ActionTile(
                           icon: Icons.trending_up,
                           label: 'Add Income',
                           onTap: () {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (_) => const FinancialEntryScreen(),
+                                builder: (_) => const FinancialEntryScreen(initialIndex: 0),
                               ),
-                            );
+                            ).then((_) => loadDashboard());
+                          },
+                        ),
+
+                        _ActionTile(
+                          icon: Icons.add_circle_outline,
+                          label: 'Add Expense',
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const FinancialEntryScreen(initialIndex: 1),
+                              ),
+                            ).then((_) => loadDashboard());
                           },
                         ),
 
                         _ActionTile(
                           icon: Icons.credit_card_off_outlined,
                           label: 'Add Debt',
-                          onTap: () {},
-                        ),
-
-                        _ActionTile(
-                          icon: Icons.insights_outlined,
-                          label: 'Forecast',
                           onTap: () {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (_) => const ForecastScreen(),
+                                builder: (_) => const FinancialEntryScreen(initialIndex: 2),
                               ),
-                            );
+                            ).then((_) => loadDashboard());
+                          },
+                        ),
+
+                        _ActionTile(
+                          icon: Icons.account_balance_outlined,
+                          label: 'Add Asset',
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const FinancialEntryScreen(initialIndex: 3),
+                              ),
+                            ).then((_) => loadDashboard());
                           },
                         ),
                       ],

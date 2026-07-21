@@ -3,7 +3,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'financial_api.dart';
 
 class FinancialEntryScreen extends StatefulWidget {
-  const FinancialEntryScreen({super.key});
+  final int initialIndex;
+  const FinancialEntryScreen({super.key, this.initialIndex = 0});
 
   @override
   State<FinancialEntryScreen> createState() => _FinancialEntryScreenState();
@@ -26,12 +27,20 @@ class _FinancialEntryScreenState extends State<FinancialEntryScreen>
   final debtMonthlyPaymentController = TextEditingController();
   final debtInterestController = TextEditingController();
 
+  final assetNameController = TextEditingController();
+  final assetAmountController = TextEditingController();
+  final assetTypeController = TextEditingController(text: 'Savings Account');
+
   bool isLoading = false;
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this);
+    _tabController = TabController(
+      length: 4,
+      vsync: this,
+      initialIndex: widget.initialIndex.clamp(0, 3),
+    );
   }
 
   @override
@@ -47,6 +56,9 @@ class _FinancialEntryScreenState extends State<FinancialEntryScreen>
     debtOutstandingController.dispose();
     debtMonthlyPaymentController.dispose();
     debtInterestController.dispose();
+    assetNameController.dispose();
+    assetAmountController.dispose();
+    assetTypeController.dispose();
     super.dispose();
   }
 
@@ -226,6 +238,49 @@ class _FinancialEntryScreenState extends State<FinancialEntryScreen>
     }
   }
 
+  Future<void> submitAsset() async {
+    final name = assetNameController.text.trim();
+    final amountText = assetAmountController.text.trim();
+    final type = assetTypeController.text.trim();
+
+    if (name.isEmpty || amountText.isEmpty) {
+      _showMessage('Please fill asset fields', isError: true);
+      return;
+    }
+
+    final amount = double.tryParse(amountText);
+    if (amount == null) {
+      _showMessage('Invalid asset amount', isError: true);
+      return;
+    }
+
+    final token = await _getToken();
+    if (token == null || token.isEmpty) {
+      _showMessage('Login token not found', isError: true);
+      return;
+    }
+
+    setState(() => isLoading = true);
+    try {
+      final result = await FinancialApi.addAsset(
+        token: token,
+        assetName: name,
+        amount: amount,
+        assetType: type.isEmpty ? 'Savings Account' : type,
+      );
+
+      _showMessage(result['message'] ?? 'Asset saved');
+      if (result['success'] == true) {
+        assetNameController.clear();
+        assetAmountController.clear();
+      }
+    } catch (e) {
+      _showMessage(e.toString(), isError: true);
+    } finally {
+      if (mounted) setState(() => isLoading = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -249,6 +304,7 @@ class _FinancialEntryScreenState extends State<FinancialEntryScreen>
             Tab(text: 'Income'),
             Tab(text: 'Expense'),
             Tab(text: 'Debt'),
+            Tab(text: 'Asset'),
           ],
         ),
       ),
@@ -278,6 +334,13 @@ class _FinancialEntryScreenState extends State<FinancialEntryScreen>
                   interestController: debtInterestController,
                   fieldDecoration: fieldDecoration,
                   onSubmit: submitDebt,
+                ),
+                _AssetForm(
+                  nameController: assetNameController,
+                  amountController: assetAmountController,
+                  typeController: assetTypeController,
+                  fieldDecoration: fieldDecoration,
+                  onSubmit: submitAsset,
                 ),
               ],
             ),
@@ -490,6 +553,78 @@ class _DebtForm extends StatelessWidget {
               ),
               child: const Text(
                 'Save Debt',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _AssetForm extends StatelessWidget {
+  final TextEditingController nameController;
+  final TextEditingController amountController;
+  final TextEditingController typeController;
+  final InputDecoration Function(String hint, {IconData? icon}) fieldDecoration;
+  final VoidCallback onSubmit;
+
+  const _AssetForm({
+    required this.nameController,
+    required this.amountController,
+    required this.typeController,
+    required this.fieldDecoration,
+    required this.onSubmit,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        children: [
+          TextField(
+            controller: nameController,
+            decoration: fieldDecoration(
+              'Asset name (e.g. Savings, Gold, FD)',
+              icon: Icons.account_balance_outlined,
+            ),
+          ),
+          const SizedBox(height: 14),
+          TextField(
+            controller: amountController,
+            keyboardType: TextInputType.number,
+            decoration: fieldDecoration(
+              'Asset value amount',
+              icon: Icons.currency_rupee,
+            ),
+          ),
+          const SizedBox(height: 14),
+          TextField(
+            controller: typeController,
+            decoration: fieldDecoration(
+              'Asset type (e.g. Savings Account, Mutual Funds)',
+              icon: Icons.category_outlined,
+            ),
+          ),
+          const SizedBox(height: 20),
+          SizedBox(
+            width: double.infinity,
+            height: 52,
+            child: ElevatedButton(
+              onPressed: onSubmit,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF2457F5),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              child: const Text(
+                'Save Asset',
                 style: TextStyle(
                   color: Colors.white,
                   fontWeight: FontWeight.w700,

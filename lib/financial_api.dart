@@ -85,4 +85,30 @@ class FinancialApi {
       'message': data['detail'] ?? 'Failed to add debt',
     };
   }
+
+  static Future<Map<String, dynamic>> addAsset({
+    required String token,
+    required String assetName,
+    required double amount,
+    String assetType = 'Savings Account',
+  }) async {
+    final response = await ApiConfig.post(
+      '/financial/asset',
+      {
+        'asset_name': assetName,
+        'amount': amount,
+        'asset_type': assetType,
+      },
+      token: token,
+    );
+
+    final data = jsonDecode(response.body);
+    if (response.statusCode == 200) {
+      return {'success': true, 'message': data['message'] ?? 'Asset added'};
+    }
+    return {
+      'success': false,
+      'message': data['detail'] ?? 'Failed to add asset',
+    };
+  }
 }
