@@ -1,4 +1,4 @@
-const BASE_URL = 'https://lemon-pigs-feel.loca.lt';
+const BASE_URL = 'https://whole-friends-pump.loca.lt';
 
 // Dynamic Local Storage Data Store for GitHub Pages & Offline Mode
 const UserStore = {
@@ -378,7 +378,16 @@ const Api = {
     };
     if (token) headers['Authorization'] = `Bearer ${token}`;
 
-    try {
+      if (endpoint === '/financial/income') {
+        UserStore.addIncome(body.category, body.amount, body.notes, body.tx_date);
+      } else if (endpoint === '/financial/expense') {
+        UserStore.addExpense(body.category, body.amount, body.notes, body.tx_date);
+      } else if (endpoint === '/financial/liability') {
+        UserStore.addDebt(body.liability_name, body.outstanding_amount, body.monthly_payment, body.interest_rate);
+      } else if (endpoint === '/financial/asset') {
+        UserStore.addAsset(body.asset_name, body.amount, body.asset_type);
+      }
+
       const response = await fetch(`${BASE_URL}${endpoint}`, {
         method: method,
         headers: headers,
@@ -390,27 +399,11 @@ const Api = {
       }
       return data;
     } catch (err) {
-      console.warn(`[Dynamic Store] Using dynamic client state for ${endpoint}.`);
+      console.warn(`[Dynamic Store] Backend response sync for ${endpoint}:`, err);
       if (endpoint === '/auth/login') {
         const userObj = { full_name: body.identifier.split('@')[0] || 'User', email: body.identifier };
         localStorage.setItem('user_data', JSON.stringify(userObj));
         return { success: true, token: 'mock_token', user: userObj };
-      }
-      if (endpoint === '/financial/income') {
-        UserStore.addIncome(body.category, body.amount, body.notes, body.tx_date);
-        return { success: true, message: 'Income added successfully' };
-      }
-      if (endpoint === '/financial/expense') {
-        UserStore.addExpense(body.category, body.amount, body.notes, body.tx_date);
-        return { success: true, message: 'Expense added successfully' };
-      }
-      if (endpoint === '/financial/liability') {
-        UserStore.addDebt(body.liability_name, body.outstanding_amount, body.monthly_payment, body.interest_rate);
-        return { success: true, message: 'Debt added successfully' };
-      }
-      if (endpoint === '/financial/asset') {
-        UserStore.addAsset(body.asset_name, body.amount, body.asset_type);
-        return { success: true, message: 'Asset added successfully' };
       }
       return { success: true };
     }

@@ -3,9 +3,9 @@ import 'package:http/http.dart' as http;
 
 class ApiConfig {
   static const List<String> candidateUrls = [
-    "https://lemon-pigs-feel.loca.lt",
+    "http://127.0.0.1:8000",
+    "https://whole-friends-pump.loca.lt",
     "http://10.0.2.2:8000",
-    "http://172.23.49.230:8000",
     "http://localhost:8000",
   ];
 
