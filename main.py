@@ -493,6 +493,50 @@ def dashboard_summary(user_id: int = Depends(get_current_user_id)):
                 m_score = max(0, min(100, score + deltas[5 - offset]))
             trend_scores.append(m_score)
 
+        recent_activity = []
+        try:
+            cursor.execute(
+                """
+                (SELECT id, 'income' AS type, category AS title, notes, amount, tx_date AS date FROM financial_transactions WHERE user_id = %s AND tx_type = 'income')
+                UNION ALL
+                (SELECT id, 'expense' AS type, category AS title, notes, -amount AS amount, tx_date AS date FROM financial_transactions WHERE user_id = %s AND tx_type = 'expense')
+                UNION ALL
+                (SELECT id, 'debt' AS type, liability_name AS title, CONCAT('EMI: ₹', CAST(monthly_payment AS CHAR)) AS notes, -outstanding_amount AS amount, created_at AS date FROM financial_liabilities WHERE user_id = %s)
+                UNION ALL
+                (SELECT id, 'asset' AS type, asset_name AS title, asset_type AS notes, amount, created_at AS date FROM financial_assets WHERE user_id = %s)
+                ORDER BY date DESC LIMIT 20
+                """,
+                (user_id, user_id, user_id, user_id)
+            )
+            recent_rows = cursor.fetchall()
+            for r in recent_rows:
+                tx_type = r['type']
+                amt = float(r['amount'])
+                if tx_type == 'income':
+                    icon, color, badge = 'fa-arrow-down', '#16a34a', 'Income'
+                elif tx_type == 'expense':
+                    icon, color, badge = 'fa-arrow-up', '#ef4444', 'Expense'
+                elif tx_type == 'debt':
+                    icon, color, badge = 'fa-credit-card', '#8250df', 'Liability'
+                else:
+                    icon, color, badge = 'fa-vault', '#0969da', 'Asset'
+
+                recent_activity.append({
+                    "id": str(r['id']),
+                    "type": tx_type,
+                    "title": r['title'] or 'Transaction',
+                    "notes": r['notes'] or '',
+                    "amount": amt,
+                    "txDate": str(r['date'])[:10] if r['date'] else '',
+                    "icon": icon,
+                    "color": color,
+                    "badge": badge,
+                    "rawType": tx_type,
+                    "index": r['id']
+                })
+        except Exception as err:
+            print(f"[Warning] Failed to fetch recent_activity: {err}")
+
         return {
             "success": True,
             "risk_score": score,
@@ -507,6 +551,7 @@ def dashboard_summary(user_id: int = Depends(get_current_user_id)):
             "expense_ratio": expense_ratio,
             "monthly_surplus": monthly_surplus,
             "alerts": alerts,
+            "recent_activity": recent_activity,
             "trend_labels": trend_labels,
             "trend_scores": trend_scores
         }

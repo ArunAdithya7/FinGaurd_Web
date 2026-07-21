@@ -178,6 +178,71 @@ class _DashboardScreenState extends State<DashboardScreen> {
     }
   }
 
+  void _showNotificationsBottomSheet(List<String> alerts, List<dynamic> recentActivity) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return Container(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    'Notifications & Alerts',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w800,
+                      color: Color(0xFF0F172A),
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: () => Navigator.pop(context),
+                    icon: const Icon(Icons.close),
+                  )
+                ],
+              ),
+              const SizedBox(height: 12),
+              if (alerts.isEmpty)
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 16),
+                  child: Text('No active notifications', style: TextStyle(color: Colors.grey)),
+                )
+              else
+                ...alerts.map((a) => Container(
+                  margin: const EdgeInsets.only(bottom: 8),
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFFFBEB),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: const Color(0xFFFDE68A)),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.warning_amber_rounded, color: Color(0xFFF59E0B)),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          a,
+                          style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+                        ),
+                      ),
+                    ],
+                  ),
+                )),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   Widget _drawerItem(
     IconData icon,
     String text,
@@ -261,6 +326,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
             : [0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
         : rawScores;
 
+    final List<dynamic> recentActivity = List<dynamic>.from(
+      dashboardData['recent_activity'] ?? [],
+    );
+
     return Scaffold(
       backgroundColor: const Color(0xFFF4F7FB),
 
@@ -295,7 +364,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           Stack(
             children: [
               IconButton(
-                onPressed: () {},
+                onPressed: () => _showNotificationsBottomSheet(alerts, recentActivity),
                 icon: const Icon(Icons.notifications_none_rounded),
               ),
 
@@ -827,6 +896,125 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           ),
                         ),
                       ),
+
+                    const SizedBox(height: 20),
+
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          'Recent Transactions Log',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w800,
+                            color: Color(0xFF0F172A),
+                          ),
+                        ),
+                        Text(
+                          '${recentActivity.length} entries',
+                          style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xFF2457F5),
+                          ),
+                        ),
+                      ],
+                    ),
+
+                    const SizedBox(height: 12),
+
+                    if (recentActivity.isEmpty)
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: const Color(0xFFE5EAF2)),
+                        ),
+                        child: const Row(
+                          children: [
+                            Icon(Icons.receipt_long_outlined, color: Colors.grey),
+                            SizedBox(width: 12),
+                            Expanded(
+                              child: Text(
+                                'No spending history recorded yet',
+                                style: TextStyle(color: Colors.grey, fontSize: 13),
+                              ),
+                            ),
+                          ],
+                        ),
+                      )
+                    else
+                      ...recentActivity.map((item) {
+                        final double amt = (item['amount'] is num)
+                            ? (item['amount'] as num).toDouble()
+                            : double.tryParse('${item['amount']}') ?? 0.0;
+                        final bool isPositive = amt > 0;
+                        final String amountStr =
+                            '${isPositive ? '+' : ''}${formatCurrency(amt)}';
+                        final Color color = isPositive
+                            ? const Color(0xFF16A34A)
+                            : const Color(0xFFEF4444);
+
+                        return Container(
+                          margin: const EdgeInsets.only(bottom: 8),
+                          padding: const EdgeInsets.all(14),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: const Color(0xFFE5EAF2)),
+                          ),
+                          child: Row(
+                            children: [
+                              Container(
+                                width: 40,
+                                height: 40,
+                                decoration: BoxDecoration(
+                                  color: color.withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: Icon(
+                                  isPositive
+                                      ? Icons.arrow_downward_rounded
+                                      : Icons.arrow_upward_rounded,
+                                  color: color,
+                                  size: 20,
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      '${item['title'] ?? 'Entry'}',
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.w700,
+                                        fontSize: 14,
+                                      ),
+                                    ),
+                                    Text(
+                                      '${item['notes'] ?? ''} ${(item['txDate'] != null && item['txDate'].toString().isNotEmpty) ? '• ${item['txDate']}' : ''}',
+                                      style: const TextStyle(
+                                        color: Colors.grey,
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              Text(
+                                amountStr,
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w800,
+                                  fontSize: 15,
+                                  color: color,
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      }),
 
                     const SizedBox(height: 20),
                   ],
