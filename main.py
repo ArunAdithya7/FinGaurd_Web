@@ -38,6 +38,21 @@ def get_db_connection():
     return mysql.connector.connect(**DB_CONFIG)
 
 
+def init_db_schema():
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("ALTER TABLE financial_assets MODIFY asset_type VARCHAR(255) NOT NULL DEFAULT 'other'")
+        conn.commit()
+        cursor.close()
+        conn.close()
+    except Exception as e:
+        print(f"[DB Init] {e}")
+
+
+init_db_schema()
+
+
 def hash_password(password: str) -> str:
     return pwd_context.hash(password)
 
@@ -326,12 +341,14 @@ def add_asset(data: AssetCreate, user_id: int = Depends(get_current_user_id)):
     conn = get_db_connection()
     cursor = conn.cursor()
     try:
+        asset_type_val = (data.asset_type or 'other')[:255]
+        asset_name_val = (data.asset_name or 'Asset')[:120]
         cursor.execute(
             """
             INSERT INTO financial_assets (user_id, asset_name, asset_type, amount)
             VALUES (%s, %s, %s, %s)
             """,
-            (user_id, data.asset_name, data.asset_type, data.amount)
+            (user_id, asset_name_val, asset_type_val, data.amount)
         )
         conn.commit()
         return {"success": True, "message": "Asset added successfully"}
