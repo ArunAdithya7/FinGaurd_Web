@@ -1,4 +1,4 @@
-const BASE_URL = 'https://whole-friends-pump.loca.lt';
+const BASE_URL = 'https://hot-hounds-nail.loca.lt';
 
 // Dynamic Local Storage Data Store for GitHub Pages & Offline Mode
 const UserStore = {
