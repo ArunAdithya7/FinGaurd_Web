@@ -394,7 +394,7 @@ def dashboard_summary(user_id: int = Depends(get_current_user_id)):
         current_month = today.month
         month_start, month_end = month_bounds(current_year, current_month)
 
-        # current month income / expense
+        # current month income / expense with total fallback
         monthly_income = fetch_one_value(
             cursor,
             """
@@ -405,6 +405,16 @@ def dashboard_summary(user_id: int = Depends(get_current_user_id)):
             """,
             (user_id, month_start, month_end)
         )
+        if monthly_income <= 0:
+            monthly_income = fetch_one_value(
+                cursor,
+                """
+                SELECT COALESCE(SUM(amount), 0) AS total
+                FROM financial_transactions
+                WHERE user_id = %s AND tx_type = 'income'
+                """,
+                (user_id,)
+            )
 
         monthly_expense = fetch_one_value(
             cursor,
@@ -416,6 +426,16 @@ def dashboard_summary(user_id: int = Depends(get_current_user_id)):
             """,
             (user_id, month_start, month_end)
         )
+        if monthly_expense <= 0:
+            monthly_expense = fetch_one_value(
+                cursor,
+                """
+                SELECT COALESCE(SUM(amount), 0) AS total
+                FROM financial_transactions
+                WHERE user_id = %s AND tx_type = 'expense'
+                """,
+                (user_id,)
+            )
 
         # assets and liabilities
         total_assets = fetch_one_value(

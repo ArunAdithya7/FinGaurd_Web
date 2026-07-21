@@ -15,15 +15,21 @@ const UserStore = {
     const key = this.getStorageKey();
     const existing = localStorage.getItem(key);
     if (existing) {
-      try { return JSON.parse(existing); } catch (e) {}
+      try {
+        const parsed = JSON.parse(existing);
+        if (parsed && (parsed.incomes.length > 0 || parsed.expenses.length > 0 || parsed.debts.length > 0 || parsed.assets.length > 0)) {
+          return parsed;
+        }
+      } catch (e) {}
     }
-    // Default initial 0-data state for NEW users
-    return {
-      incomes: [],
-      expenses: [],
-      debts: [],
-      assets: []
+    const defaultData = {
+      incomes: [{ category: 'Monthly Income', amount: 50000, notes: 'Primary income source', txDate: new Date().toISOString().split('T')[0] }],
+      expenses: [{ category: 'Living Expenses', amount: 18000, notes: 'Food, Utilities & Rent', txDate: new Date().toISOString().split('T')[0] }],
+      debts: [{ name: 'Car Loan EMI', outstanding: 120000, payment: 5000, rate: 9.5 }],
+      assets: [{ name: 'Savings & Mutual Funds', amount: 85000, type: 'Savings Account', date: new Date().toISOString().split('T')[0] }]
     };
+    this.saveData(defaultData);
+    return defaultData;
   },
 
   saveData(data) {
