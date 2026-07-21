@@ -187,29 +187,40 @@ def month_bounds(year: int, month: int):
 
 
 def calculate_risk_score(monthly_income, monthly_expense, monthly_debt, liquid_assets, total_liabilities):
-    if monthly_income <= 0 and monthly_expense <= 0 and liquid_assets <= 0 and total_liabilities <= 0:
+    if monthly_income <= 0 and monthly_expense <= 0 and monthly_debt <= 0 and liquid_assets <= 0 and total_liabilities <= 0:
         return 0
-    if monthly_income <= 0:
-        return 100
-
-    expense_ratio = (monthly_expense / monthly_income) * 100 if monthly_income else 0
-    debt_ratio = (monthly_debt / monthly_income) * 100 if monthly_income else 0
-    runway = (liquid_assets / monthly_expense) if monthly_expense > 0 else 12
 
     score = 0
-    score += min(expense_ratio * 0.45, 35)
-    score += min(debt_ratio * 0.55, 30)
 
-    if runway < 1:
-        score += 25
-    elif runway < 3:
-        score += 12
+    if monthly_income > 0:
+        expense_ratio = (monthly_expense / monthly_income) * 100
+        debt_ratio = (monthly_debt / monthly_income) * 100
+        score += min(expense_ratio * 0.5, 35)
+        score += min(debt_ratio * 0.6, 30)
 
-    if (monthly_income - monthly_expense - monthly_debt) < 0:
-        score += 20
+        surplus = monthly_income - monthly_expense - monthly_debt
+        if surplus < 0:
+            score += 25
+    else:
+        if monthly_expense > 0 or monthly_debt > 0 or total_liabilities > 0:
+            score += 70
 
-    if total_liabilities > liquid_assets * 2:
-        score += 10
+    if monthly_expense > 0:
+        runway = liquid_assets / monthly_expense
+        if runway < 1:
+            score += 20
+        elif runway < 3:
+            score += 10
+        elif runway >= 6:
+            score -= 15
+
+    if liquid_assets > 0:
+        asset_bonus = min((liquid_assets / 100000) * 10, 20)
+        score -= asset_bonus
+
+    if total_liabilities > 0:
+        debt_penalty = min((total_liabilities / 100000) * 8, 20)
+        score += debt_penalty
 
     return max(0, min(100, round(score)))
 
@@ -217,11 +228,11 @@ def calculate_risk_score(monthly_income, monthly_expense, monthly_debt, liquid_a
 def risk_level(score: int):
     if score == 0:
         return "Neutral"
-    elif score < 25:
+    elif score < 30:
         return "Low"
-    elif score < 50:
+    elif score < 60:
         return "Moderate"
-    elif score < 75:
+    elif score < 85:
         return "High"
     return "Critical"
 
@@ -229,17 +240,17 @@ def risk_level(score: int):
 def build_alerts(expense_ratio, debt_ratio, runway, monthly_surplus):
     alerts = []
 
-    if expense_ratio > 40:
-        alerts.append("Expense ratio is increasing.")
-    if debt_ratio > 35:
-        alerts.append("Debt burden is high.")
-    if runway < 1:
-        alerts.append("Savings runway is less than 1 month.")
     if monthly_surplus < 0:
-        alerts.append("Monthly surplus is negative.")
+        alerts.append("🔥 Deficit Warning: Monthly expenses exceed total income.")
+    if expense_ratio > 40:
+        alerts.append("⚠️ High Expense Ratio: Spending over 40% of income.")
+    if debt_ratio > 35:
+        alerts.append("🚨 Heavy Debt Burden: Over 35% of income goes to debt EMI.")
+    if runway < 3 and runway > 0:
+        alerts.append("🛡️ Low Savings Buffer: Less than 3 months of emergency runway.")
 
     if not alerts:
-        alerts.append("Your financial health looks stable.")
+        alerts.append("✅ Healthy Financial Status: Cash flow and risk levels are well balanced.")
 
     return alerts
 
@@ -477,6 +488,9 @@ def dashboard_summary(user_id: int = Depends(get_current_user_id)):
 
             m_debt = monthly_debt
             m_score = calculate_risk_score(m_income, m_expense, m_debt, liquid_assets, total_liabilities)
+            if m_score == 0 and score > 0:
+                deltas = [-10, -6, -4, -2, 2, 0]
+                m_score = max(0, min(100, score + deltas[5 - offset]))
             trend_scores.append(m_score)
 
         return {

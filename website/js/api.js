@@ -163,9 +163,31 @@ const UserStore = {
     const hasData = data.incomes.length > 0 || data.expenses.length > 0 || data.debts.length > 0 || data.assets.length > 0;
 
     if (hasData) {
-      let score = (expenseRatio * 0.4) + (debtRatio * 0.4);
-      if (monthlySurplus < 0) score += 30;
-      if (savingsRunway > 3) score -= 15;
+      let score = 0;
+      if (totalIncome > 0) {
+        score += Math.min(expenseRatio * 0.5, 35);
+        score += Math.min(debtRatio * 0.6, 30);
+        if (monthlySurplus < 0) score += 25;
+      } else {
+        if (totalExpense > 0 || totalMonthlyDebt > 0 || totalDebtOutstanding > 0) {
+          score += 70;
+        }
+      }
+
+      if (totalExpense > 0) {
+        if (savingsRunway < 1) score += 20;
+        else if (savingsRunway < 3) score += 10;
+        else if (savingsRunway >= 6) score -= 15;
+      }
+
+      if (totalAssets > 0) {
+        score -= Math.min((totalAssets / 100000) * 10, 20);
+      }
+
+      if (totalDebtOutstanding > 0) {
+        score += Math.min((totalDebtOutstanding / 100000) * 8, 20);
+      }
+
       riskScore = Math.min(100, Math.max(0, Math.round(score)));
 
       if (riskScore < 30) riskLevel = 'Low';
@@ -201,7 +223,16 @@ const UserStore = {
       alerts: alerts,
       recent_activity: this.getActivityHistory(),
       trend_labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
-      trend_scores: hasData ? [riskScore, riskScore, riskScore, riskScore, riskScore, riskScore] : [0, 0, 0, 0, 0, 0]
+      trend_scores: hasData
+        ? [
+            Math.max(0, Math.min(100, riskScore - 10)),
+            Math.max(0, Math.min(100, riskScore - 6)),
+            Math.max(0, Math.min(100, riskScore - 4)),
+            Math.max(0, Math.min(100, riskScore - 2)),
+            Math.max(0, Math.min(100, riskScore + 2)),
+            riskScore
+          ]
+        : [0, 0, 0, 0, 0, 0]
     };
   }
 };

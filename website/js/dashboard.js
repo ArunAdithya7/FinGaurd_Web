@@ -745,22 +745,26 @@ function renderHomeChart(labels, data) {
     homeChartInstance.destroy();
   }
 
+  const gradient = ctx.createLinearGradient(0, 0, 0, 220);
+  gradient.addColorStop(0, 'rgba(36, 87, 245, 0.35)');
+  gradient.addColorStop(1, 'rgba(36, 87, 245, 0.0)');
+
   homeChartInstance = new Chart(ctx, {
     type: 'line',
     data: {
       labels: labels,
       datasets: [{
-        label: 'Risk Score',
+        label: 'Financial Distress Risk Score',
         data: data,
         borderColor: '#2457f5',
-        backgroundColor: 'rgba(36, 87, 245, 0.05)',
+        backgroundColor: gradient,
         borderWidth: 3,
         pointBackgroundColor: '#2457f5',
         pointBorderColor: '#ffffff',
-        pointBorderWidth: 2,
-        pointRadius: 5,
-        pointHoverRadius: 7,
-        tension: 0.35,
+        pointBorderWidth: 3,
+        pointRadius: 6,
+        pointHoverRadius: 9,
+        tension: 0.38,
         fill: true
       }]
     },

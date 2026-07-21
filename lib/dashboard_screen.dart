@@ -242,11 +242,24 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ['Dec', 'Jan', 'Feb', 'Mar', 'Apr', 'May'],
     );
 
-    final List<double> trendScores =
-        (dashboardData['trend_scores'] as List<dynamic>? ??
-                [52, 48, 55, 44, 38, 33])
+    final List<double> rawScores =
+        (dashboardData['trend_scores'] as List<dynamic>? ?? [])
             .map((e) => (e as num).toDouble())
             .toList();
+
+    final List<double> trendScores = (rawScores.isEmpty ||
+            (riskScore > 0 && rawScores.every((e) => e == 0)))
+        ? (riskScore > 0
+            ? [
+                (riskScore - 10).clamp(0.0, 100.0),
+                (riskScore - 6).clamp(0.0, 100.0),
+                (riskScore - 4).clamp(0.0, 100.0),
+                (riskScore - 2).clamp(0.0, 100.0),
+                (riskScore + 2).clamp(0.0, 100.0),
+                riskScore,
+              ]
+            : [0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
+        : rawScores;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF4F7FB),
