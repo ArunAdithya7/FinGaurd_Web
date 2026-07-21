@@ -187,6 +187,8 @@ def month_bounds(year: int, month: int):
 
 
 def calculate_risk_score(monthly_income, monthly_expense, monthly_debt, liquid_assets, total_liabilities):
+    if monthly_income <= 0 and monthly_expense <= 0 and liquid_assets <= 0 and total_liabilities <= 0:
+        return 0
     if monthly_income <= 0:
         return 100
 
@@ -213,7 +215,9 @@ def calculate_risk_score(monthly_income, monthly_expense, monthly_debt, liquid_a
 
 
 def risk_level(score: int):
-    if score < 25:
+    if score == 0:
+        return "Neutral"
+    elif score < 25:
         return "Low"
     elif score < 50:
         return "Moderate"

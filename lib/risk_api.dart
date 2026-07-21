@@ -1,22 +1,10 @@
 import 'dart:convert';
-import 'package:http/http.dart' as http;
+import 'api_config.dart';
 
 class RiskApi {
-  static const String baseUrl = 'http://10.0.2.2:8000';
-  
-
   static Future<Map<String, dynamic>> fetchRiskAnalysis(String token) async {
     try {
-      final response = await http
-          .get(
-            Uri.parse('$baseUrl/risk/analysis'),
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': 'Bearer $token',
-            },
-          )
-          .timeout(const Duration(seconds: 4));
-
+      final response = await ApiConfig.get('/risk/analysis', token);
       final data = jsonDecode(response.body);
 
       if (response.statusCode == 200) {
@@ -25,40 +13,28 @@ class RiskApi {
         throw Exception(data['detail'] ?? 'Failed to load risk analysis');
       }
     } catch (_) {
-      // Fallback risk metrics for demo mode & offline
       return {
         "success": true,
-        "risk_score": 35.0,
-        "risk_level": "Low",
-        "expense_ratio": 42.6,
-        "debt_ratio": 13.3,
-        "savings_runway": 6.4,
-        "monthly_surplus": 33000.0,
+        "risk_score": 0.0,
+        "risk_level": "Neutral",
+        "expense_ratio": 0.0,
+        "debt_ratio": 0.0,
+        "savings_runway": 0.0,
+        "monthly_surplus": 0.0,
         "factors": [
           {
             "title": "Expense Ratio",
             "description": "How much of your income is spent every month.",
-            "impact": 42.6,
+            "impact": 0.0,
           },
           {
             "title": "Debt Ratio",
             "description": "How much of your income goes to debt payments.",
-            "impact": 13.3,
-          },
-          {
-            "title": "Savings Runway",
-            "description": "How many months your savings can cover expenses.",
-            "impact": 25.0,
-          },
-          {
-            "title": "Monthly Surplus",
-            "description": "Income left after expenses and debt payments.",
-            "impact": 20.0,
+            "impact": 0.0,
           },
         ],
         "suggestions": [
-          "Maintain your current savings discipline.",
-          "Keep high-interest liabilities minimal.",
+          "Add your income and expenses to view detailed risk analysis.",
         ],
       };
     }

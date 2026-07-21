@@ -1,28 +1,23 @@
 import 'dart:convert';
-import 'package:http/http.dart' as http;
+import 'api_config.dart';
 
 class FinancialApi {
-  static const String baseUrl = 'http://10.0.2.2:8000';
-
   static Future<Map<String, dynamic>> addIncome({
     required String token,
     required String category,
     required double amount,
     String? notes,
-    String? txDate, // format: yyyy-mm-dd
+    String? txDate,
   }) async {
-    final response = await http.post(
-      Uri.parse('$baseUrl/financial/income'),
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
-      },
-      body: jsonEncode({
+    final response = await ApiConfig.post(
+      '/financial/income',
+      {
         'category': category,
         'amount': amount,
         'notes': notes,
         'tx_date': txDate,
-      }),
+      },
+      token: token,
     );
 
     final data = jsonDecode(response.body);
@@ -42,18 +37,15 @@ class FinancialApi {
     String? notes,
     String? txDate,
   }) async {
-    final response = await http.post(
-      Uri.parse('$baseUrl/financial/expense'),
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
-      },
-      body: jsonEncode({
+    final response = await ApiConfig.post(
+      '/financial/expense',
+      {
         'category': category,
         'amount': amount,
         'notes': notes,
         'tx_date': txDate,
-      }),
+      },
+      token: token,
     );
 
     final data = jsonDecode(response.body);
@@ -73,18 +65,15 @@ class FinancialApi {
     required double monthlyPayment,
     double interestRate = 0.0,
   }) async {
-    final response = await http.post(
-      Uri.parse('$baseUrl/financial/liability'),
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
-      },
-      body: jsonEncode({
+    final response = await ApiConfig.post(
+      '/financial/liability',
+      {
         'liability_name': liabilityName,
         'outstanding_amount': outstandingAmount,
         'monthly_payment': monthlyPayment,
         'interest_rate': interestRate,
-      }),
+      },
+      token: token,
     );
 
     final data = jsonDecode(response.body);

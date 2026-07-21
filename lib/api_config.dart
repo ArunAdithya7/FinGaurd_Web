@@ -1,11 +1,86 @@
-class ApiConfig {
-  // Your PC's Local Wi-Fi IP address
-  static const String pcIp = "172.23.49.230";
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 
-  // Base URL pointing to FastAPI server
-  // On physical phone over Wi-Fi or USB reverse port forwarding:
-  static const String baseUrl = "http://10.0.2.2:8000";
-  
-  // Backup / Wi-Fi URL for physical phone:
-  static const String wifiUrl = "http://$pcIp:8000";
+class ApiConfig {
+  static const List<String> candidateUrls = [
+    "http://10.0.2.2:8000",
+    "http://172.23.49.230:8000",
+    "http://localhost:8000",
+  ];
+
+  static Future<http.Response> get(String endpoint, String token) async {
+    Object? lastException;
+    for (final base in candidateUrls) {
+      try {
+        final url = Uri.parse('$base$endpoint');
+        final response = await http.get(
+          url,
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer $token',
+          },
+        ).timeout(const Duration(seconds: 4));
+        return response;
+      } catch (e) {
+        lastException = e;
+      }
+    }
+    throw Exception('Failed to connect to backend server ($lastException)');
+  }
+
+  static Future<http.Response> post(
+    String endpoint,
+    Map<String, dynamic> body, {
+    String? token,
+  }) async {
+    Object? lastException;
+    for (final base in candidateUrls) {
+      try {
+        final url = Uri.parse('$base$endpoint');
+        final headers = <String, String>{'Content-Type': 'application/json'};
+        if (token != null && token.isNotEmpty) {
+          headers['Authorization'] = 'Bearer $token';
+        }
+        final response = await http
+            .post(
+              url,
+              headers: headers,
+              body: jsonEncode(body),
+            )
+            .timeout(const Duration(seconds: 4));
+        return response;
+      } catch (e) {
+        lastException = e;
+      }
+    }
+    throw Exception('Failed to connect to backend server ($lastException)');
+  }
+
+  static Future<http.Response> put(
+    String endpoint,
+    Map<String, dynamic> body, {
+    String? token,
+  }) async {
+    Object? lastException;
+    for (final base in candidateUrls) {
+      try {
+        final url = Uri.parse('$base$endpoint');
+        final headers = <String, String>{'Content-Type': 'application/json'};
+        if (token != null && token.isNotEmpty) {
+          headers['Authorization'] = 'Bearer $token';
+        }
+        final response = await http
+            .put(
+              url,
+              headers: headers,
+              body: jsonEncode(body),
+            )
+            .timeout(const Duration(seconds: 4));
+        return response;
+      } catch (e) {
+        lastException = e;
+      }
+    }
+    throw Exception('Failed to connect to backend server ($lastException)');
+  }
 }
