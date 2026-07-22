@@ -17,7 +17,7 @@ const UserStore = {
     if (existing) {
       try {
         const parsed = JSON.parse(existing);
-        if (parsed && (parsed.incomes.length > 0 || parsed.expenses.length > 0 || parsed.debts.length > 0 || parsed.assets.length > 0)) {
+        if (parsed && parsed.incomes && parsed.expenses && parsed.debts && parsed.assets) {
           return parsed;
         }
       } catch (e) {}

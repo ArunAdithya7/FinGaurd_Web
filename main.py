@@ -203,7 +203,7 @@ def month_bounds(year: int, month: int):
 
 def calculate_risk_score(monthly_income, monthly_expense, monthly_debt, liquid_assets, total_liabilities):
     if monthly_income <= 0 and monthly_expense <= 0 and monthly_debt <= 0 and liquid_assets <= 0 and total_liabilities <= 0:
-        return 32
+        return 0
 
     score = 0
 
@@ -472,19 +472,19 @@ def dashboard_summary(user_id: int = Depends(get_current_user_id)):
         has_data = monthly_income > 0 or monthly_expense > 0 or monthly_debt > 0 or total_assets > 0 or total_liabilities > 0
 
         if not has_data:
-            monthly_income = 50000.0
-            monthly_expense = 18000.0
-            monthly_debt = 5000.0
-            total_assets = 85000.0
-            total_liabilities = 120000.0
-            liquid_assets = 85000.0
-            expense_ratio = 36.0
-            debt_ratio = 10.0
-            savings_runway = 4.7
-            monthly_surplus = 27000.0
-            score = 32
-            level = "Low"
-            alerts = ["✅ Welcome to FinGuard! Default baseline figures loaded. Add entries to customize."]
+            monthly_income = 0.0
+            monthly_expense = 0.0
+            monthly_debt = 0.0
+            total_assets = 0.0
+            total_liabilities = 0.0
+            liquid_assets = 0.0
+            expense_ratio = 0.0
+            debt_ratio = 0.0
+            savings_runway = 0.0
+            monthly_surplus = 0.0
+            score = 0
+            level = "Neutral"
+            alerts = ["Welcome! Add income or expenses to generate your risk score."]
         else:
             expense_ratio = round((monthly_expense / monthly_income) * 100, 1) if monthly_income > 0 else 0
             debt_ratio = round((monthly_debt / monthly_income) * 100, 1) if monthly_income > 0 else 0
