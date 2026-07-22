@@ -1,4 +1,4 @@
-const BASE_URL = 'https://1c32652d872e70.lhr.life';
+const BASE_URL = 'https://f3f9af0c5b2765.lhr.life';
 
 // Dynamic Local Storage Data Store for GitHub Pages & Offline Mode
 const UserStore = {

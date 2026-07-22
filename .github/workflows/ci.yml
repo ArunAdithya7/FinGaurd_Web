@@ -210,7 +210,22 @@ jobs:
         with:
           python-version: '3.10'
 
+      - name: Install Python Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install openpyxl
+
       - name: Run Load Test (Mock Mode)
         run: |
           python load_tests/load_test.py --mock --duration 60 --users 100
+
+      - name: Generate Load Test Excel Report
+        run: |
+          python load_tests/generate_report.py
+
+      - name: Upload Load Test Excel Reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: load-test-reports
+          path: load_tests/reports/
 
