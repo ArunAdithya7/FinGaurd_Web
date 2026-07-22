@@ -426,7 +426,7 @@ class _InfoTile extends StatelessWidget {
             width: 42,
             height: 42,
             decoration: BoxDecoration(
-              color: const Color(0xFF2457F5).withOpacity(0.12),
+              color: const Color(0xFF2457F5).withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Icon(icon, color: const Color(0xFF2457F5)),

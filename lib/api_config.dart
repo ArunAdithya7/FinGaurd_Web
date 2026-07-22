@@ -5,7 +5,7 @@ class ApiConfig {
   static const List<String> candidateUrls = [
     "http://127.0.0.1:8000",
     "http://10.139.57.228:8000",
-    "https://rich-coins-slide.loca.lt",
+    "https://silent-candies-switch.loca.lt",
     "http://10.0.2.2:8000",
     "http://localhost:8000",
   ];
@@ -23,6 +23,9 @@ class ApiConfig {
             'bypass-tunnel-reminder': 'true',
           },
         ).timeout(const Duration(seconds: 4));
+        if (response.statusCode == 502 || response.statusCode == 503 || response.statusCode == 504) {
+          throw Exception('Tunnel error ${response.statusCode}');
+        }
         return response;
       } catch (e) {
         lastException = e;
@@ -54,6 +57,9 @@ class ApiConfig {
               body: jsonEncode(body),
             )
             .timeout(const Duration(seconds: 4));
+        if (response.statusCode == 502 || response.statusCode == 503 || response.statusCode == 504) {
+          throw Exception('Tunnel error ${response.statusCode}');
+        }
         return response;
       } catch (e) {
         lastException = e;
@@ -85,6 +91,9 @@ class ApiConfig {
               body: jsonEncode(body),
             )
             .timeout(const Duration(seconds: 4));
+        if (response.statusCode == 502 || response.statusCode == 503 || response.statusCode == 504) {
+          throw Exception('Tunnel error ${response.statusCode}');
+        }
         return response;
       } catch (e) {
         lastException = e;
